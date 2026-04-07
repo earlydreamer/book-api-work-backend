@@ -50,7 +50,7 @@ public class DayCardController {
 
 	@Operation(
 		summary = "하루 기록 저장 또는 수정",
-		description = "특정 날짜에 내 감정과 메모, 사진 URL을 저장하거나 수정해요."
+		description = "특정 날짜에 내 감정과 메모, 사진 URL 또는 업로드 자산을 저장하거나 수정해요."
 	)
 	@ApiResponses({
 		@ApiResponse(

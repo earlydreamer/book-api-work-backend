@@ -18,9 +18,9 @@ replay_pid*
 
 ### 로컬 환경 파일 ###
 .env
+.env.local
 .env.*
 !.env.example
-!.env.sample
 
 ### Spring 로컬 설정 ###
 src/main/resources/application-local.yml

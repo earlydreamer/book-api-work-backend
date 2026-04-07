@@ -40,6 +40,18 @@ class TodayUsContractServiceTest {
 	private CurrentUserProvider currentUserProvider;
 
 	@Mock
+	private UploadedAssetService uploadedAssetService;
+
+	@Mock
+	private BookSnapshotService bookSnapshotService;
+
+	@Mock
+	private SweetbookBookService sweetbookBookService;
+
+	@Mock
+	private OrderService orderService;
+
+	@Mock
 	private EmotionCatalog emotionCatalog;
 
 	private final Clock clock = Clock.fixed(Instant.parse("2026-04-07T00:00:00Z"), ZoneId.of("Asia/Seoul"));
@@ -53,6 +65,10 @@ class TodayUsContractServiceTest {
 			coupleRepository,
 			dayCardRepository,
 			currentUserProvider,
+			uploadedAssetService,
+			bookSnapshotService,
+			sweetbookBookService,
+			orderService,
 			emotionCatalog,
 			clock
 		);

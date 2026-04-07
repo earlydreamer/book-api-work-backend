@@ -25,6 +25,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-webclient")
+	implementation(platform("software.amazon.awssdk:bom:2.41.31"))
+	implementation("software.amazon.awssdk:s3")
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")

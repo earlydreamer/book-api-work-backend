@@ -1,6 +1,7 @@
 package dev.earlydreamer.todayus.service;
 
 import dev.earlydreamer.todayus.dto.archive.ArchiveResponse;
+import dev.earlydreamer.todayus.dto.books.BookSnapshotSummaryResponse;
 import dev.earlydreamer.todayus.dto.books.CurrentBookSnapshotResponse;
 import dev.earlydreamer.todayus.dto.common.ContractTypes.ArchiveSectionType;
 import dev.earlydreamer.todayus.dto.common.ContractTypes.BookProgressResponse;
@@ -20,11 +21,13 @@ import dev.earlydreamer.todayus.dto.daycard.SaveDayCardEntryRequest;
 import dev.earlydreamer.todayus.dto.daycard.SaveDayCardEntryResponse;
 import dev.earlydreamer.todayus.dto.daycard.TodayCardResponse;
 import dev.earlydreamer.todayus.dto.home.HomeResponse;
+import dev.earlydreamer.todayus.entity.BookSnapshotEntity;
 import dev.earlydreamer.todayus.entity.CardEntryEntity;
 import dev.earlydreamer.todayus.entity.CoupleEntity;
 import dev.earlydreamer.todayus.entity.CoupleStatus;
 import dev.earlydreamer.todayus.entity.DayCardEntity;
 import dev.earlydreamer.todayus.entity.DayCardStatus;
+import dev.earlydreamer.todayus.entity.UploadedAssetEntity;
 import dev.earlydreamer.todayus.entity.UserEntity;
 import dev.earlydreamer.todayus.entity.UserRole;
 import dev.earlydreamer.todayus.repository.CoupleRepository;
@@ -60,6 +63,10 @@ public class TodayUsContractService {
 	private final CoupleRepository coupleRepository;
 	private final DayCardRepository dayCardRepository;
 	private final CurrentUserProvider currentUserProvider;
+	private final UploadedAssetService uploadedAssetService;
+	private final BookSnapshotService bookSnapshotService;
+	private final SweetbookBookService sweetbookBookService;
+	private final OrderService orderService;
 	private final EmotionCatalog emotionCatalog;
 	private final Clock clock;
 
@@ -68,6 +75,10 @@ public class TodayUsContractService {
 		CoupleRepository coupleRepository,
 		DayCardRepository dayCardRepository,
 		CurrentUserProvider currentUserProvider,
+		UploadedAssetService uploadedAssetService,
+		BookSnapshotService bookSnapshotService,
+		SweetbookBookService sweetbookBookService,
+		OrderService orderService,
 		EmotionCatalog emotionCatalog,
 		Clock clock
 	) {
@@ -75,6 +86,10 @@ public class TodayUsContractService {
 		this.coupleRepository = coupleRepository;
 		this.dayCardRepository = dayCardRepository;
 		this.currentUserProvider = currentUserProvider;
+		this.uploadedAssetService = uploadedAssetService;
+		this.bookSnapshotService = bookSnapshotService;
+		this.sweetbookBookService = sweetbookBookService;
+		this.orderService = orderService;
 		this.emotionCatalog = emotionCatalog;
 		this.clock = clock;
 	}
@@ -221,7 +236,12 @@ public class TodayUsContractService {
 		DayCardEntity dayCard = dayCardRepository.findByCouple_IdAndLocalDate(activeCouple.getId(), targetDate)
 			.orElseGet(() -> new DayCardEntity(activeCouple, targetDate, closeAtUtc(targetDate)));
 
-		dayCard.upsertEntry(currentUser, request.emotionCode(), request.memo(), request.photoUrl());
+		UploadedAssetEntity uploadedAsset = request.uploadedAssetId() == null || request.uploadedAssetId().isBlank()
+			? null
+			: uploadedAssetService.requireUsableAsset(request.uploadedAssetId(), currentUser.getId(), activeCouple.getId());
+
+		String resolvedPhotoUrl = uploadedAsset != null ? uploadedAsset.getPublicUrl() : request.photoUrl();
+		dayCard.upsertEntry(currentUser, request.emotionCode(), request.memo(), resolvedPhotoUrl, uploadedAsset);
 		DayCardEntity saved = dayCardRepository.save(dayCard);
 
 		return new SaveDayCardEntryResponse(
@@ -237,17 +257,55 @@ public class TodayUsContractService {
 			.map((couple) -> {
 				List<DayCardEntity> recentCards = getRecentWindowCards(couple.getId());
 				List<MomentRecordResponse> candidateMoments = recentCards.stream()
-					.filter((dayCard) -> dayCard.getState() == DayCardStatus.COMPLETE)
+					.filter(this::hasRecordedEntries)
 					.map((dayCard) -> toMomentRecord(dayCard, currentUser))
 					.collect(Collectors.toList());
+				BookSnapshotSummaryResponse snapshot = bookSnapshotService.findLatestByCoupleId(couple.getId())
+					.map(this::toSnapshotSummary)
+					.orElse(null);
+				var currentOrder = snapshot == null
+					? null
+					: orderService.findLatestSummaryBySnapshotId(snapshot.snapshotId()).orElse(null);
 				return new CurrentBookSnapshotResponse(
-					bookProgress(recordedDays(recentCards)),
+					bookProgress(recordedDays(recentCards), snapshot),
 					candidateMoments,
-					null,
-					null
+					snapshot,
+					currentOrder
 				);
 			})
 			.orElseGet(() -> new CurrentBookSnapshotResponse(bookProgress(0), List.of(), null, null));
+	}
+
+	@Transactional
+	public CurrentBookSnapshotResponse buildCurrentBookSnapshot() {
+		UserEntity currentUser = getOrCreateCurrentUser();
+		CoupleEntity activeCouple = findActiveRelationship(currentUser.getId())
+			.orElseThrow(() -> new ApiException(
+				HttpStatus.NOT_FOUND,
+				"relationship_not_found",
+				"현재 연결을 찾을 수 없어요.",
+				"연결된 상대가 있을 때만 책 스냅샷을 만들 수 있어요."
+			));
+
+		List<DayCardEntity> recentCards = getRecentWindowCards(activeCouple.getId());
+		BookSnapshotEntity snapshot = bookSnapshotService.createCurrentSnapshot(activeCouple, currentUser, recentCards);
+		snapshot = sweetbookBookService.buildSnapshot(snapshot.getId());
+		List<MomentRecordResponse> candidateMoments = recentCards.stream()
+			.filter(this::hasRecordedEntries)
+			.map((dayCard) -> toMomentRecord(dayCard, currentUser))
+			.collect(Collectors.toList());
+
+		BookSnapshotSummaryResponse snapshotSummary = toSnapshotSummary(snapshot);
+		return new CurrentBookSnapshotResponse(
+			bookProgress(recordedDays(recentCards), snapshotSummary),
+			candidateMoments,
+			snapshotSummary,
+			orderService.findLatestSummaryBySnapshotId(snapshotSummary.snapshotId()).orElse(null)
+		);
+	}
+
+	public UserEntity getCurrentUserForRead() {
+		return getOrCreateCurrentUser();
 	}
 
 	private UserEntity getOrCreateCurrentUser() {
@@ -356,7 +414,10 @@ public class TodayUsContractService {
 		if (couple == null || couple.getStatus() != CoupleStatus.ACTIVE) {
 			return bookProgress(0);
 		}
-		return bookProgress(recordedDays(getRecentWindowCards(couple.getId())));
+		BookSnapshotSummaryResponse snapshot = bookSnapshotService.findLatestByCoupleId(couple.getId())
+			.map(this::toSnapshotSummary)
+			.orElse(null);
+		return bookProgress(recordedDays(getRecentWindowCards(couple.getId())), snapshot);
 	}
 
 	private int recordedDays(List<DayCardEntity> dayCards) {
@@ -483,12 +544,36 @@ public class TodayUsContractService {
 	}
 
 	private BookProgressResponse bookProgress(int recordedDays) {
+		return bookProgress(recordedDays, null);
+	}
+
+	private BookProgressResponse bookProgress(int recordedDays, BookSnapshotSummaryResponse snapshot) {
+		BookState bookState = snapshot == null
+			? (recordedDays >= BOOK_REQUIRED_DAYS ? BookState.ELIGIBLE : BookState.GROWING)
+			: switch (snapshot.status()) {
+				case SNAPSHOT_BUILDING -> BookState.SNAPSHOT_BUILDING;
+				case READY_TO_ORDER -> BookState.READY_TO_ORDER;
+				case ORDERED -> BookState.ORDERED;
+			};
 		return new BookProgressResponse(
 			BOOK_LOOKBACK_DAYS,
 			BOOK_REQUIRED_DAYS,
 			recordedDays,
 			Math.max(BOOK_REQUIRED_DAYS - recordedDays, 0),
-			recordedDays >= BOOK_REQUIRED_DAYS ? BookState.ELIGIBLE : BookState.GROWING
+			bookState
+		);
+	}
+
+	private BookSnapshotSummaryResponse toSnapshotSummary(BookSnapshotEntity snapshot) {
+		return new BookSnapshotSummaryResponse(
+			snapshot.getId(),
+			snapshot.getStatus(),
+			snapshot.getWindowStartDate().toString(),
+			snapshot.getWindowEndDate().toString(),
+			snapshot.getRecordedDays(),
+			snapshot.getSelectedItemCount(),
+			snapshot.getBuildStartedAt().toString(),
+			snapshot.getBuildCompletedAt() != null ? snapshot.getBuildCompletedAt().toString() : null
 		);
 	}
 

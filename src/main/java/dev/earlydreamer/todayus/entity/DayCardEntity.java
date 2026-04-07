@@ -74,14 +74,14 @@ public class DayCardEntity {
 			.findFirst();
 	}
 
-	public void upsertEntry(UserEntity user, String emotionCode, String memo, String photoUrl) {
+	public void upsertEntry(UserEntity user, String emotionCode, String memo, String photoUrl, UploadedAssetEntity uploadedAsset) {
 		CardEntryEntity entry = findEntry(user.getId())
 			.orElseGet(() -> {
 				CardEntryEntity created = new CardEntryEntity(this, user);
 				this.entries.add(created);
 				return created;
 			});
-		entry.update(emotionCode, memo, photoUrl);
+		entry.update(emotionCode, memo, photoUrl, uploadedAsset);
 		refreshState();
 	}
 

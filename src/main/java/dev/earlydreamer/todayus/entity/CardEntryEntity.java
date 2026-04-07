@@ -39,6 +39,10 @@ public class CardEntryEntity {
 	@Column(name = "photo_url", length = 2000)
 	private String photoUrl;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "uploaded_asset_id")
+	private UploadedAssetEntity uploadedAsset;
+
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
@@ -55,10 +59,11 @@ public class CardEntryEntity {
 		this.user = user;
 	}
 
-	public void update(String emotionCode, String memo, String photoUrl) {
+	public void update(String emotionCode, String memo, String photoUrl, UploadedAssetEntity uploadedAsset) {
 		this.emotionCode = emotionCode;
 		this.memo = memo;
 		this.photoUrl = photoUrl;
+		this.uploadedAsset = uploadedAsset;
 	}
 
 	public boolean hasRecordedContent() {
@@ -79,5 +84,9 @@ public class CardEntryEntity {
 
 	public String getPhotoUrl() {
 		return photoUrl;
+	}
+
+	public UploadedAssetEntity getUploadedAsset() {
+		return uploadedAsset;
 	}
 }

@@ -10,3 +10,17 @@ today-us:
     auth-enabled: false
   time:
     fixed-date-time: 2026-04-07T09:00:00+09:00[Asia/Seoul]
+  r2:
+    account-id: test-r2-account
+    access-key-id: test-r2-access-key
+    secret-access-key: test-r2-secret
+    bucket: test-r2-bucket
+    public-base-url: https://cdn.example.com
+    upload-prefix: uploads
+    presign-ttl-seconds: 900
+  sweetbook:
+    base-url: http://localhost:18089
+    api-key: test-sweetbook-api-key
+    book-spec-id: test-book-spec-id
+    template-id: test-template-id
+    webhook-secret: test-webhook-secret

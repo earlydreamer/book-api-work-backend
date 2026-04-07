@@ -11,9 +11,9 @@ public record CurrentBookSnapshotResponse(
 	BookProgressResponse bookProgress,
 	@Schema(description = "책에 넣을 수 있는 후보 기록 목록")
 	List<MomentRecordResponse> candidateMoments,
-	@Schema(description = "생성된 스냅샷이 있으면 내려와요. 현재 core slice에서는 아직 null이에요.", nullable = true)
-	Object snapshot,
-	@Schema(description = "주문 정보가 있으면 내려와요. 현재 core slice에서는 아직 null이에요.", nullable = true)
-	Object order
+	@Schema(description = "생성된 스냅샷이 있으면 내려와요.", nullable = true)
+	BookSnapshotSummaryResponse snapshot,
+	@Schema(description = "주문 정보가 있으면 내려와요.", nullable = true)
+	CurrentOrderSummaryResponse order
 ) {
 }

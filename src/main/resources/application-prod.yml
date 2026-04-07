@@ -4,3 +4,19 @@ spring:
     username: ${TODAY_US_DB_USERNAME}
     password: ${TODAY_US_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+today-us:
+  r2:
+    account-id: ${TODAY_US_R2_ACCOUNT_ID}
+    access-key-id: ${TODAY_US_R2_ACCESS_KEY_ID}
+    secret-access-key: ${TODAY_US_R2_SECRET_ACCESS_KEY}
+    bucket: ${TODAY_US_R2_BUCKET}
+    public-base-url: ${TODAY_US_R2_PUBLIC_BASE_URL}
+    upload-prefix: ${TODAY_US_R2_UPLOAD_PREFIX}
+    presign-ttl-seconds: ${TODAY_US_R2_PRESIGN_TTL_SECONDS}
+  sweetbook:
+    base-url: ${TODAY_US_SWEETBOOK_BASE_URL}
+    api-key: ${TODAY_US_SWEETBOOK_API_KEY}
+    book-spec-id: ${TODAY_US_SWEETBOOK_BOOK_SPEC_ID}
+    template-id: ${TODAY_US_SWEETBOOK_TEMPLATE_ID}
+    webhook-secret: ${TODAY_US_SWEETBOOK_WEBHOOK_SECRET}

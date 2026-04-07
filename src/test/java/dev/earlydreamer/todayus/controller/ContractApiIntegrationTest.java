@@ -195,7 +195,8 @@ class ContractApiIntegrationTest {
 		mockMvc.perform(get("/api/v1/book-snapshots/current"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.bookProgress.recordedDays").value(2))
-			.andExpect(jsonPath("$.candidateMoments[0].state").value("complete"))
+			.andExpect(jsonPath("$.candidateMoments[0].state").value("partial"))
+			.andExpect(jsonPath("$.candidateMoments[1].state").value("complete"))
 			.andExpect(jsonPath("$.snapshot").isEmpty())
 			.andExpect(jsonPath("$.order").isEmpty());
 	}
@@ -207,10 +208,14 @@ class ContractApiIntegrationTest {
 			.andExpect(jsonPath("$.info.title").value("오늘 우리 백엔드 Contract API"))
 			.andExpect(jsonPath("$.paths['/api/v1/me/home'].get.summary").value("피드 홈 요약 조회"))
 			.andExpect(jsonPath("$.paths['/api/v1/couples/invites'].post.tags[0]").value("Couples"))
+			.andExpect(jsonPath("$.paths['/api/v1/orders'].post.summary").value("수동 주문 생성"))
+			.andExpect(jsonPath("$.paths['/api/v1/webhooks/sweetbook'].post.tags[0]").value("Webhooks"))
 			.andExpect(jsonPath("$.paths['/api/v1/day-cards/{localDate}/entry'].put.parameters[0].description")
 				.value("기록을 저장할 로컬 날짜예요. yyyy-MM-dd 형식을 사용해요."))
 			.andExpect(jsonPath("$.components.schemas.CreateInviteRequest.properties.startDate.description")
 				.value("연결을 시작한 날짜예요. yyyy-MM-dd 형식을 사용해요."))
+			.andExpect(jsonPath("$.components.schemas.CreateOrderRequest.properties.postalCode.description")
+				.value("우편번호예요."))
 			.andExpect(jsonPath("$.components.schemas.SaveDayCardEntryRequest.properties.emotionCode.description")
 				.value("선택한 감정 코드예요."));
 	}
