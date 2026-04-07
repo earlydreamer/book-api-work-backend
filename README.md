@@ -9,12 +9,13 @@
 
 ## 1. 먼저 읽을 문서
 
-1. `/mnt/d/Projects/book-api-work/AGENTS.md`
-2. `/mnt/d/Projects/book-api-work/docs/specs/2026-04-07-cross-env-handoff-v1.md`
-3. `/mnt/d/Projects/book-api-work/docs/specs/2026-04-05-today-our-mvp-v2.md`
-4. `/mnt/d/Projects/book-api-work/docs/plans/2026-04-05-today-our-mvp-execution-blueprint.md`
-5. `/mnt/d/Projects/book-api-work/docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
-6. `/mnt/d/Projects/book-api-work/docs/specs/2026-04-07-today-us-front-progress-v1.md`
+1. `AGENTS.md`
+2. `docs/README.md`
+3. `docs/specs/2026-04-07-cross-env-handoff-v1.md`
+4. `docs/specs/2026-04-05-today-our-mvp-v2.md`
+5. `docs/plans/2026-04-05-today-our-mvp-execution-blueprint.md`
+6. `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
+7. `docs/specs/2026-04-07-today-us-front-progress-v1.md`
 
 ---
 
@@ -88,6 +89,7 @@
 
 ## 7. 주의
 
-- 루트 `/mnt/d/Projects/book-api-work`는 문서 허브 성격이고, 이 폴더는 별도 nested git repo다.
+- 이 repo는 독립 nested git repo다.
+- 공통 문서와 프론트 참고 문서는 이 repo의 `docs/` 아래에 로컬 사본으로 보관한다.
 - 프론트 활성 구현은 `/mnt/d/Projects/book-api-work/today-us/today-us-front` 쪽이다.
 - 예전 `frontend/book-api-work-frontend`는 레거시 참고용이다.
