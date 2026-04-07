@@ -1,0 +1,6 @@
+DELETE FROM card_entries;
+DELETE FROM day_cards;
+DELETE FROM couples;
+DELETE FROM users;
+ALTER TABLE day_cards ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE card_entries ALTER COLUMN id RESTART WITH 1;
