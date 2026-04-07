@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: today-us-backend
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+today-us:
+  security:
+    auth-enabled: true
+  time:
+    zone-id: Asia/Seoul
