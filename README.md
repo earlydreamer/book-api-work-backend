@@ -27,7 +27,9 @@
 - auth boundary는 Spring Security Resource Server 기준으로 연결 완료
 - profile 분리 완료: 기본은 secure-by-default, `local`/`test`만 auth-disabled + H2
 - Postgres Testcontainers smoke test 추가 완료, 현재 환경에서는 Docker 없으면 skip
-- 운영 Supabase JWK 설정, R2, 주문/스냅샷 쓰기 경로는 아직 미구현
+- `.env.example` 기준 env 관리, R2 direct upload intent/complete 구현 완료
+- Sweetbook sandbox 책 생성, asset 업로드, finalization 구현 완료
+- 수동 주문 생성, 주문 조회, Sweetbook webhook 상태 동기화 구현 완료
 - frontend는 이미 `현재 관계 / 이전 관계` 분리 정책을 기준으로 구현됨
 - backend는 그 정책을 그대로 수용하는 응답 shape부터 잠근 상태
 
@@ -72,18 +74,33 @@
 
 ---
 
-## 5. 바로 시작할 때의 추천 순서
+## 5. 로컬 비밀값 관리
 
-1. contract endpoint를 frontend adapter와 실제 fetch layer에 연결
+- Spring은 `application.yml`에서 `optional:file:.env[.properties]`를 읽는다.
+- `.env`와 `.env.local`은 git에 올리지 않는다.
+- 새 키를 추가할 때는 `.env.example`을 먼저 갱신하고, 그다음 설정 파일을 맞춘다.
+- 실제 값은 `.env`에 두고, 개인별 오버라이드가 필요하면 `.env.local`을 쓰되 추적하지 않는다.
+
+가장 먼저 할 일은 이거다.
+
+```bash
+cp .env.example .env
+```
+
+---
+
+## 6. 바로 시작할 때의 추천 순서
+
+1. frontend에서 `uploads -> day-card -> book-snapshot -> orders` 실연동 연결
 2. 운영 환경에 Supabase JWK 설정과 현재 사용자 hydrate를 붙이기
-3. `book_snapshots`, `orders`, upload intent 쪽 persistence를 확장하기
-4. 그다음 snapshot / order write path와 외부 연동으로 확장
+3. Sweetbook sandbox 실키와 webhook delivery 설정을 운영값으로 맞추기
+4. 결제 confirm이 들어오면 현재 수동 주문 생성 트리거를 교체하기
 
 핵심은 `order`보다 먼저 `relationship state`를 안정적으로 표현하는 거다.
 
 ---
 
-## 6. 실행 모드
+## 7. 실행 모드
 
 ### local
 
@@ -92,6 +109,7 @@
 - DB: H2
 
 ```bash
+cp .env.example .env
 SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
 
@@ -126,7 +144,45 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>
 
 ---
 
-## 7. 아직 열린 결정
+## 8. 환경 변수 요약
+
+### 데이터베이스 / 인증
+
+- `TODAY_US_DB_URL`
+- `TODAY_US_DB_USERNAME`
+- `TODAY_US_DB_PASSWORD`
+- `TODAY_US_DB_DRIVER`
+- `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI`
+- `TODAY_US_SUPABASE_PROJECT_URL`
+
+### Cloudflare R2
+
+- `TODAY_US_R2_ACCOUNT_ID`
+- `TODAY_US_R2_ACCESS_KEY_ID`
+- `TODAY_US_R2_SECRET_ACCESS_KEY`
+- `TODAY_US_R2_BUCKET`
+- `TODAY_US_R2_PUBLIC_BASE_URL`
+- `TODAY_US_R2_UPLOAD_PREFIX`
+- `TODAY_US_R2_PRESIGN_TTL_SECONDS`
+
+### Sweetbook sandbox
+
+- `TODAY_US_SWEETBOOK_BASE_URL`
+- `TODAY_US_SWEETBOOK_API_KEY`
+- `TODAY_US_SWEETBOOK_BOOK_SPEC_ID`
+- `TODAY_US_SWEETBOOK_TEMPLATE_ID`
+- `TODAY_US_SWEETBOOK_WEBHOOK_SECRET`
+
+### 실행 감각
+
+- `local`은 H2 + auth 비활성으로 돌린다.
+- `default`는 secure-by-default라서 DB/JWT 값을 직접 넣어야 한다.
+- `prod`는 Postgres/JWT/R2/Sweetbook 값을 모두 환경 변수로 받는다.
+- `test`는 `src/test/resources/application-test.yml`의 고정값으로 돌아간다.
+
+---
+
+## 9. 아직 열린 결정
 
 1. reconnect 시 새 `couple_id` 생성 가정을 최종 확정할지
 2. `GET /api/v1/me/home`를 BFF 응답으로 둘지, resource 조합형으로 둘지
@@ -135,12 +191,15 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>
 
 ---
 
-## 8. 지금 있는 핵심 파일
+## 10. 지금 있는 핵심 파일
 
 - `build.gradle.kts`
 - `src/main/java/dev/earlydreamer/todayus/TodayUsBackendApplication.java`
 - `src/main/java/dev/earlydreamer/todayus/controller/`
 - `src/main/java/dev/earlydreamer/todayus/service/TodayUsContractService.java`
+- `src/main/java/dev/earlydreamer/todayus/service/OrderService.java`
+- `src/main/java/dev/earlydreamer/todayus/service/SweetbookBookService.java`
+- `src/main/java/dev/earlydreamer/todayus/service/SweetbookWebhookService.java`
 - `src/main/java/dev/earlydreamer/todayus/service/CurrentUserProvider.java`
 - `src/main/java/dev/earlydreamer/todayus/service/JwtCurrentUserProvider.java`
 - `src/main/java/dev/earlydreamer/todayus/service/LocalCurrentUserProvider.java`
@@ -152,12 +211,16 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>
 - `src/main/resources/application-prod.yml`
 - `src/main/java/dev/earlydreamer/todayus/support/`
 - `src/test/java/dev/earlydreamer/todayus/controller/ContractApiIntegrationTest.java`
+- `src/test/java/dev/earlydreamer/todayus/controller/OrderControllerIntegrationTest.java`
+- `src/test/java/dev/earlydreamer/todayus/controller/SweetbookWebhookControllerIntegrationTest.java`
 - `src/test/java/dev/earlydreamer/todayus/security/`
 - `src/test/java/dev/earlydreamer/todayus/repository/PostgresSchemaIntegrationTest.java`
+- `docs/specs/2026-04-08-sweetbook-sandbox-book-pipeline-v1.md`
+- `docs/plans/2026-04-08-sweetbook-sandbox-book-pipeline-implementation-plan.md`
 - `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
 - `docs/plans/2026-04-07-today-us-backend-contract-scaffold-plan.md`
 
-## 9. 주의
+## 11. 주의
 
 - 이 repo는 독립 nested git repo다.
 - 공통 문서와 프론트 참고 문서는 이 repo의 `docs/` 아래에 로컬 사본으로 보관한다.
