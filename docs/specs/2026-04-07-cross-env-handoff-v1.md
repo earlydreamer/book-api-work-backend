@@ -33,7 +33,7 @@
 ## 2. 지금 workspace를 한 줄로 설명하면
 
 `today-us/today-us-front`는 현재 상태 계약이 정리된 활성 프론트 구현체이고,
-`backend/book-api-work-backend`는 아직 코드 없는 빈 repo이며,
+`backend/book-api-work-backend`는 contract endpoint와 JPA core slice가 들어간 Spring Boot repo이며,
 공통 문서는 이 repo의 `docs/`에 로컬 사본으로 들어 있고, frontend repo에도 대응 사본이 있다.
 
 ---
@@ -73,8 +73,10 @@
 `/mnt/d/Projects/book-api-work/backend/book-api-work-backend`
 
 - nested git repo
-- 2026-04-07 기준 애플리케이션 코드 없음
-- 구현 전 문서 계약 정리가 먼저 필요한 상태
+- 2026-04-07 기준 Spring Boot contract scaffold + JPA core slice 존재
+- endpoint, DTO, validation, ProblemDetail, security toggle, OpenAPI, JPA entity/repository, Flyway migration까지 들어간 상태
+- local 기본 실행은 H2 + Flyway 기준
+- Supabase JWT 검증과 운영 Postgres 연결은 다음 슬라이스
 
 ---
 
@@ -175,11 +177,11 @@ npm run build
 
 ### 6.2 아직 구현되지 않은 것
 
-- 프로젝트 bootstrap
-- controller / service / repository skeleton
-- DTO / validation / auth filter
-- DB schema / migration
-- archive/current 분리 API
+- 실제 Supabase JWT 검증 연결
+- 운영 Postgres datasource와 환경별 설정 분리
+- snapshot/order write path
+- R2 presigned upload flow
+- 외부 제작/결제 연동
 
 ### 6.3 backend가 반드시 따라야 할 현재 정책
 
@@ -202,8 +204,8 @@ npm run build
 - 현재 관계와 이전 관계를 DB 레벨에서 가장 명확하게 분리할 수 있다.
 - 피드, 책 진행도, 최근 기록 계산이 자연스럽다.
 
-하지만 아직 최종 확정은 아니다.
-backend 구현 들어가기 전에 이 가정을 다시 확인해야 한다.
+지금 JPA 구현도 이 가정을 기준으로 들어가 있다.
+만약 뒤집으면 `couples` migration, archive 조회, reconnect service 로직을 같이 바꿔야 한다.
 
 ### 7.2 home/archive 응답 모델 스타일
 
@@ -262,17 +264,18 @@ UI/상태 규칙을 참고로만 봐야 한다.
 
 1. `README.md` 읽기
 2. `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md` 읽기
-3. reconnect 정책 가정 확인
-4. skeleton 생성
-5. `GET /api/v1/me/home` / `GET /api/v1/archive` DTO부터 잠그기
+3. `docs/plans/2026-04-07-today-us-backend-contract-scaffold-plan.md` 읽기
+4. `./gradlew test`
+5. `./gradlew build`
+6. Supabase JWT / 운영 Postgres / snapshot-order 확장 순서로 이어가기
 
 ---
 
 ## 10. 추천 다음 순서
 
-1. backend 계약 초안을 DTO/에러 모델 수준으로 더 세부화
-2. backend skeleton 생성
-3. 프론트 mock adapter shape를 backend DTO에 맞게 수렴
+1. contract endpoint를 프론트 adapter와 실제 fetch layer에 연결
+2. Supabase JWT 검증과 local auth fallback 분리
+3. `book_snapshots`, `orders` persistence 모델 확장
 4. Auth hydrate / MakeBook 테스트 보강
 5. AI Studio 잔재 제거
 

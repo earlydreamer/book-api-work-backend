@@ -2,8 +2,8 @@
 
 `backend/book-api-work-backend`는 현재 백엔드 구현 대상 디렉터리다.
 
-2026-04-07 기준으로 이 repo에는 아직 애플리케이션 코드가 없다.
-지금 단계의 핵심은 코드를 빨리 쓰는 게 아니라, 프론트에서 잠근 상태 계약을 backend API와 데이터 모델로 정확히 옮기는 것이다.
+2026-04-07 기준으로 이 repo에는 `Spring Boot + JPA contract scaffold`가 들어와 있다.
+지금 단계의 핵심은 프론트에서 잠근 상태 계약을 backend API, JPA 모델, migration으로 정확히 옮기는 것이다.
 
 ---
 
@@ -21,10 +21,15 @@
 
 ## 2. 현재 상태
 
-- Spring Boot 프로젝트 초기 세팅 전
-- 엔드포인트, DTO, 관계 전환 정책은 문서로만 정리된 상태
+- Spring Boot 4.0.5 기반 Gradle Kotlin DSL skeleton 생성 완료
+- contract endpoint, DTO, ProblemDetail, security toggle, OpenAPI 설정 추가
+- JPA entity / repository / Flyway core migration 구현 완료
+- auth boundary는 Spring Security Resource Server 기준으로 연결 완료
+- profile 분리 완료: 기본은 secure-by-default, `local`/`test`만 auth-disabled + H2
+- Postgres Testcontainers smoke test 추가 완료, 현재 환경에서는 Docker 없으면 skip
+- 운영 Supabase JWK 설정, R2, 주문/스냅샷 쓰기 경로는 아직 미구현
 - frontend는 이미 `현재 관계 / 이전 관계` 분리 정책을 기준으로 구현됨
-- backend는 그 정책을 그대로 수용해야 함
+- backend는 그 정책을 그대로 수용하는 응답 shape부터 잠근 상태
 
 ---
 
@@ -54,7 +59,7 @@
 
 ## 4. 목표 스택
 
-- `Spring Boot 4.0.3`
+- `Spring Boot 4.0.x`  현재 scaffold는 `4.0.5`
 - `Java 21`
 - `Spring Security`
 - `Supabase Auth + Postgres`
@@ -69,16 +74,59 @@
 
 ## 5. 바로 시작할 때의 추천 순서
 
-1. Gradle 또는 Maven 기반 Spring Boot skeleton 생성
-2. 인증/인가 경계와 `users`, `couples`, `day_cards` 계약 타입 고정
-3. `GET /api/v1/me/home`, `GET /api/v1/archive`, `POST /api/v1/couples/current/unlink` DTO 먼저 확정
-4. 그다음 day card / snapshot / order로 확장
+1. contract endpoint를 frontend adapter와 실제 fetch layer에 연결
+2. 운영 환경에 Supabase JWK 설정과 현재 사용자 hydrate를 붙이기
+3. `book_snapshots`, `orders`, upload intent 쪽 persistence를 확장하기
+4. 그다음 snapshot / order write path와 외부 연동으로 확장
 
 핵심은 `order`보다 먼저 `relationship state`를 안정적으로 표현하는 거다.
 
 ---
 
-## 6. 아직 열린 결정
+## 6. 실행 모드
+
+### local
+
+- 목적: 프론트 계약 확인, 로컬 stub-like 개발
+- 인증: 비활성
+- DB: H2
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+```
+
+### default
+
+- 목적: secure-by-default 확인
+- 인증: 활성
+- DB: 외부 설정 필요
+
+```bash
+TODAY_US_DB_URL=jdbc:h2:mem:todayus \
+TODAY_US_DB_USERNAME=sa \
+TODAY_US_DB_DRIVER=org.h2.Driver \
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://example.invalid/auth/v1/.well-known/jwks.json \
+./gradlew bootRun
+```
+
+### prod
+
+- 목적: 운영 Postgres + JWT 검증
+- 인증: 활성
+- DB: Postgres
+
+```bash
+SPRING_PROFILES_ACTIVE=prod \
+TODAY_US_DB_URL=jdbc:postgresql://... \
+TODAY_US_DB_USERNAME=... \
+TODAY_US_DB_PASSWORD=... \
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>/auth/v1/.well-known/jwks.json \
+./gradlew bootRun
+```
+
+---
+
+## 7. 아직 열린 결정
 
 1. reconnect 시 새 `couple_id` 생성 가정을 최종 확정할지
 2. `GET /api/v1/me/home`를 BFF 응답으로 둘지, resource 조합형으로 둘지
@@ -87,7 +135,29 @@
 
 ---
 
-## 7. 주의
+## 8. 지금 있는 핵심 파일
+
+- `build.gradle.kts`
+- `src/main/java/dev/earlydreamer/todayus/TodayUsBackendApplication.java`
+- `src/main/java/dev/earlydreamer/todayus/controller/`
+- `src/main/java/dev/earlydreamer/todayus/service/TodayUsContractService.java`
+- `src/main/java/dev/earlydreamer/todayus/service/CurrentUserProvider.java`
+- `src/main/java/dev/earlydreamer/todayus/service/JwtCurrentUserProvider.java`
+- `src/main/java/dev/earlydreamer/todayus/service/LocalCurrentUserProvider.java`
+- `src/main/java/dev/earlydreamer/todayus/entity/`
+- `src/main/java/dev/earlydreamer/todayus/repository/`
+- `src/main/java/dev/earlydreamer/todayus/dto/`
+- `src/main/resources/db/migration/`
+- `src/main/resources/application-local.yml`
+- `src/main/resources/application-prod.yml`
+- `src/main/java/dev/earlydreamer/todayus/support/`
+- `src/test/java/dev/earlydreamer/todayus/controller/ContractApiIntegrationTest.java`
+- `src/test/java/dev/earlydreamer/todayus/security/`
+- `src/test/java/dev/earlydreamer/todayus/repository/PostgresSchemaIntegrationTest.java`
+- `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
+- `docs/plans/2026-04-07-today-us-backend-contract-scaffold-plan.md`
+
+## 9. 주의
 
 - 이 repo는 독립 nested git repo다.
 - 공통 문서와 프론트 참고 문서는 이 repo의 `docs/` 아래에 로컬 사본으로 보관한다.
