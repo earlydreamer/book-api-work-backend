@@ -2,6 +2,7 @@ package dev.earlydreamer.todayus.service;
 
 import dev.earlydreamer.todayus.dto.archive.ArchiveResponse;
 import dev.earlydreamer.todayus.dto.books.BookSnapshotSummaryResponse;
+import dev.earlydreamer.todayus.dto.books.BuildBookSnapshotRequest;
 import dev.earlydreamer.todayus.dto.books.CurrentBookSnapshotResponse;
 import dev.earlydreamer.todayus.dto.common.ContractTypes.ArchiveSectionType;
 import dev.earlydreamer.todayus.dto.common.ContractTypes.BookProgressResponse;
@@ -277,7 +278,7 @@ public class TodayUsContractService {
 	}
 
 	@Transactional
-	public CurrentBookSnapshotResponse buildCurrentBookSnapshot() {
+	public CurrentBookSnapshotResponse buildCurrentBookSnapshot(BuildBookSnapshotRequest request) {
 		UserEntity currentUser = getOrCreateCurrentUser();
 		CoupleEntity activeCouple = findActiveRelationship(currentUser.getId())
 			.orElseThrow(() -> new ApiException(
@@ -289,7 +290,7 @@ public class TodayUsContractService {
 
 		List<DayCardEntity> recentCards = getRecentWindowCards(activeCouple.getId());
 		BookSnapshotEntity snapshot = bookSnapshotService.createCurrentSnapshot(activeCouple, currentUser, recentCards);
-		snapshot = sweetbookBookService.buildSnapshot(snapshot.getId());
+		snapshot = sweetbookBookService.buildSnapshot(snapshot.getId(), request);
 		List<MomentRecordResponse> candidateMoments = recentCards.stream()
 			.filter(this::hasRecordedEntries)
 			.map((dayCard) -> toMomentRecord(dayCard, currentUser))
