@@ -90,8 +90,16 @@ jobs:
 
       - name: Create .env file for production from individual secrets
         run: |
+          DB_URL="${{ secrets.TODAY_US_DB_URL }}"
+
+          if echo "$DB_URL" | grep -E '(^|[?&])(user|password)=' >/dev/null; then
+            echo "❌ TODAY_US_DB_URL에 user/password query parameter를 넣으면 안 돼요."
+            echo "   URL에는 호스트와 sslmode만 두고, 계정 정보는 TODAY_US_DB_USERNAME / TODAY_US_DB_PASSWORD로 분리해 주세요."
+            exit 1
+          fi
+
           # 1. DB 설정
-          echo "TODAY_US_DB_URL=${{ secrets.TODAY_US_DB_URL }}" >> .env
+          echo "TODAY_US_DB_URL=$DB_URL" >> .env
           echo "TODAY_US_DB_USERNAME=${{ secrets.TODAY_US_DB_USERNAME }}" >> .env
           echo "TODAY_US_DB_PASSWORD=${{ secrets.TODAY_US_DB_PASSWORD }}" >> .env
           echo "TODAY_US_DB_DRIVER=${{ secrets.TODAY_US_DB_DRIVER }}" >> .env
@@ -123,6 +131,7 @@ jobs:
           # compose 루트 파일과 nginx 설정 파일을 기대 경로에 맞춰 각각 전송
           scp -F ~/.ssh/config docker-compose.yml .env "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
           scp -F ~/.ssh/config nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/nginx/nginx.conf"
+          ssh -F ~/.ssh/config synology-nas "chmod 600 ${{ secrets.SSH_DEPLOY_PATH }}/.env"
 
       - name: Deploy to Server via native SSH
         run: |

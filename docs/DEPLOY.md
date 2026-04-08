@@ -11,12 +11,27 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 `.env.local`의 값들을 기반으로 다음 이름들로 등록하세요.
 
 - `TODAY_US_DB_URL`: JDBC 연결 문자열
+  - 예시: `jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require`
+  - `user=`나 `password=`를 URL query에 넣지 말고, 아래 두 필드로 분리해요.
 - `TODAY_US_DB_USERNAME`: DB 사용자명
 - `TODAY_US_DB_PASSWORD`: DB 비밀번호
+- `TODAY_US_DB_DRIVER`: DB 드라이버 (`org.postgresql.Driver`)
+- `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI`: Supabase JWK URL
 - `TODAY_US_SUPABASE_PROJECT_URL`: Supabase URL
+- `TODAY_US_SECURITY_ALLOWED_ORIGINS`: CORS 허용 오리진
+- `TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS`: 추가 허용 오리진 패턴
+- `TODAY_US_R2_ACCOUNT_ID`: Cloudflare R2 계정 ID
 - `TODAY_US_R2_ACCESS_KEY_ID`: R2 Access Key
-- `TODAY_US_R2_SECRET_ACCESS_KEY`: R2 Secret Key (외 기타 R2 설정들...)
+- `TODAY_US_R2_SECRET_ACCESS_KEY`: R2 Secret Key
+- `TODAY_US_R2_BUCKET`: R2 버킷명
+- `TODAY_US_R2_PUBLIC_BASE_URL`: R2 공개 URL
+- `TODAY_US_R2_UPLOAD_PREFIX`: 업로드 prefix
+- `TODAY_US_R2_PRESIGN_TTL_SECONDS`: presign TTL
+- `TODAY_US_SWEETBOOK_BASE_URL`: 스윗북 API 베이스 URL
 - `TODAY_US_SWEETBOOK_API_KEY`: 스윗북 API 키
+- `TODAY_US_SWEETBOOK_BOOK_SPEC_ID`: 스윗북 책 사양 ID
+- `TODAY_US_SWEETBOOK_TEMPLATE_ID`: 스윗북 템플릿 ID
+- `TODAY_US_SWEETBOOK_WEBHOOK_SECRET`: 스윗북 웹훅 비밀키
 
 ### 🛰️ 서버 접속 정보 (SSH / Cloudflare Tunnel)
 
@@ -27,20 +42,6 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 - `CF_CLIENT_ID`: Cloudflare Zero Trust 서비스 토큰 ID
 - `CF_CLIENT_SECRET`: Cloudflare Zero Trust 서비스 토큰 Secret
 - `GHCR_TOKEN`: **GitHub Personal Access Token** (read:packages 권한 필수, Private 이미지용)
-- `ENV_PROD`: **서버용 .env 내용 전문** (DB 접속 정보, API 키 등 포함)
-- `TODAY_US_DB_USERNAME`: DB 사용자명
-- `TODAY_US_DB_PASSWORD`: DB 비밀번호
-- `TODAY_US_SECURITY_ALLOWED_ORIGINS`: CORS 허용 오리진
-- `TODAY_US_R2_ACCOUNT_ID`: Cloudflare R2 계정 ID
-- `TODAY_US_R2_ACCESS_KEY_ID`: R2 Access Key
-- `TODAY_US_R2_SECRET_ACCESS_KEY`: R2 Secret Key
-- `TODAY_US_R2_BUCKET`: R2 버킷명
-- `TODAY_US_R2_PUBLIC_BASE_URL`: R2 공개 URL (CDN)
-- `TODAY_US_SWEETBOOK_BASE_URL`: 스윗북 API 베이스 URL
-- `TODAY_US_SWEETBOOK_API_KEY`: 스윗북 API 키
-- `TODAY_US_SWEETBOOK_BOOK_SPEC_ID`: 스윗북 책 사양 ID
-- `TODAY_US_SWEETBOOK_TEMPLATE_ID`: 스윗북 템플릿 ID
-- `TODAY_US_SWEETBOOK_WEBHOOK_SECRET`: 스윗북 웹훅 비밀키
 
 ### 📂 경로 설정 (시놀로지 NAS 전용)
 
@@ -80,4 +81,5 @@ mkdir ~/today-us-backend && cd ~/today-us-backend
 
 > [!IMPORTANT]
 > - 서버의 방화벽에서 **18765** 포트가 열려 있는지 반드시 확인해 주세요.
-> - `.env` 파일 관리에 주의하세요. (현재는 CI/CD에서 환경 변수를 직접 주입하는 방식을 권장합니다.)
+> - 배포 파이프라인은 서버에 `.env` 파일을 생성한 뒤 권한을 `600`으로 고정합니다. 회전 후에는 이전 파일이나 백업본을 남기지 마세요.
+> - `TODAY_US_DB_URL`에는 `user=`나 `password=`를 넣지 마세요. 계정 정보는 `TODAY_US_DB_USERNAME`, `TODAY_US_DB_PASSWORD`로 분리해야 로그 재노출을 막을 수 있어요.
