@@ -26,7 +26,8 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 - `SSH_PRIVATE_KEY`: 서버 접속용 개인키 (`id_rsa` 내용 전체)
 - `CF_CLIENT_ID`: Cloudflare Zero Trust 서비스 토큰 ID
 - `CF_CLIENT_SECRET`: Cloudflare Zero Trust 서비스 토큰 Secret
-- `TODAY_US_DB_URL`: PostgreSQL 접속 URL
+- `GHCR_TOKEN`: **GitHub Personal Access Token** (read:packages 권한 필수, Private 이미지용)
+- `ENV_PROD`: **서버용 .env 내용 전문** (DB 접속 정보, API 키 등 포함)
 - `TODAY_US_DB_USERNAME`: DB 사용자명
 - `TODAY_US_DB_PASSWORD`: DB 비밀번호
 - `TODAY_US_SECURITY_ALLOWED_ORIGINS`: CORS 허용 오리진

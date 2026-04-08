@@ -149,6 +149,9 @@ jobs:
             
             cd "$DEPLOY_DIR"
             
+            echo "🔐 GHCR 로그인 시도"
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            
             echo "🚀 최신 이미지 풀링: $IMAGE"
             docker pull "$IMAGE" || true
             
