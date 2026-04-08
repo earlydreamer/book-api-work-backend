@@ -94,9 +94,13 @@ jobs:
           echo "TODAY_US_DB_URL=${{ secrets.TODAY_US_DB_URL }}" >> .env
           echo "TODAY_US_DB_USERNAME=${{ secrets.TODAY_US_DB_USERNAME }}" >> .env
           echo "TODAY_US_DB_PASSWORD=${{ secrets.TODAY_US_DB_PASSWORD }}" >> .env
+          echo "TODAY_US_DB_DRIVER=${{ secrets.TODAY_US_DB_DRIVER }}" >> .env
           
           # 2. 보안 및 공통 설정
+          echo "SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=${{ secrets.SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI }}" >> .env
+          echo "TODAY_US_SUPABASE_PROJECT_URL=${{ secrets.TODAY_US_SUPABASE_PROJECT_URL }}" >> .env
           echo "TODAY_US_SECURITY_ALLOWED_ORIGINS=${{ secrets.TODAY_US_SECURITY_ALLOWED_ORIGINS }}" >> .env
+          echo "TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS=${{ secrets.TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS }}" >> .env
           
           # 3. R2 저장소 설정
           echo "TODAY_US_R2_ACCOUNT_ID=${{ secrets.TODAY_US_R2_ACCOUNT_ID }}" >> .env
