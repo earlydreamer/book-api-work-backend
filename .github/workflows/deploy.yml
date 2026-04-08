@@ -36,7 +36,9 @@ jobs:
           mkdir -p ~/.ssh
           
           # 1. SSH Private Key 설정
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          cat << 'EOF' > ~/.ssh/id_rsa
+          ${{ secrets.SSH_PRIVATE_KEY }}
+          EOF
           chmod 600 ~/.ssh/id_rsa
           
           # 2. SSH Config 설정 (ProxyCommand + Service Tokens)
