@@ -34,8 +34,17 @@ public class SweetbookBookEntity {
 	@Column(name = "book_spec_id", nullable = false, length = 100)
 	private String bookSpecId;
 
-	@Column(name = "template_id", nullable = false, length = 100)
-	private String templateId;
+	@Column(name = "cover_template_id", nullable = false, length = 100)
+	private String coverTemplateId;
+
+	@Column(name = "content_template_id", nullable = false, length = 100)
+	private String contentTemplateId;
+
+	@Column(name = "interleaf_template_id", length = 100)
+	private String interleafTemplateId;
+
+	@Column(name = "publishing_template_id", length = 100)
+	private String publishingTemplateId;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 30)
@@ -64,10 +73,21 @@ public class SweetbookBookEntity {
 	protected SweetbookBookEntity() {
 	}
 
-	public SweetbookBookEntity(BookSnapshotEntity snapshot, String bookSpecId, String templateId, String createdRequestId) {
+	public SweetbookBookEntity(
+		BookSnapshotEntity snapshot,
+		String bookSpecId,
+		String coverTemplateId,
+		String contentTemplateId,
+		String interleafTemplateId,
+		String publishingTemplateId,
+		String createdRequestId
+	) {
 		this.snapshot = snapshot;
 		this.bookSpecId = bookSpecId;
-		this.templateId = templateId;
+		this.coverTemplateId = coverTemplateId;
+		this.contentTemplateId = contentTemplateId;
+		this.interleafTemplateId = interleafTemplateId;
+		this.publishingTemplateId = publishingTemplateId;
 		this.createdRequestId = createdRequestId;
 		this.status = SweetbookBookStatus.BUILDING;
 	}
@@ -99,6 +119,26 @@ public class SweetbookBookEntity {
 
 	public String getSweetbookBookUid() {
 		return sweetbookBookUid;
+	}
+
+	public String getBookSpecId() {
+		return bookSpecId;
+	}
+
+	public String getCoverTemplateId() {
+		return coverTemplateId;
+	}
+
+	public String getContentTemplateId() {
+		return contentTemplateId;
+	}
+
+	public String getInterleafTemplateId() {
+		return interleafTemplateId;
+	}
+
+	public String getPublishingTemplateId() {
+		return publishingTemplateId;
 	}
 
 	public SweetbookBookStatus getStatus() {
