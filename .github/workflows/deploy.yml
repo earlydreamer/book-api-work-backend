@@ -38,8 +38,8 @@ jobs:
           mkdir -p ~/.ssh
           
           # 1. SSH Private Key 설정 (환경변수 사용하여 인덴트 오염 방지)
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
           
           # 2. SSH Config 설정
           cat <<EOF > ~/.ssh/config
@@ -49,7 +49,7 @@ jobs:
             StrictHostKeyChecking no
             User ${{ secrets.SSH_USERNAME }}
             Port ${{ secrets.SSH_PORT }}
-            IdentityFile ~/.ssh/id_rsa
+            IdentityFile ~/.ssh/id_ed25519
           EOF
           chmod 600 ~/.ssh/config
 
