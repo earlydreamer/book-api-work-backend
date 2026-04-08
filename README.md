@@ -76,7 +76,7 @@
 
 ## 5. 로컬 비밀값 관리
 
-- Spring은 `application.yml`에서 `optional:file:.env[.properties]`를 읽는다.
+- Spring은 `application.yml`에서 `.env`, `.env.local`을 순서대로 읽는다.
 - `.env`와 `.env.local`은 git에 올리지 않는다.
 - 새 키를 추가할 때는 `.env.example`을 먼저 갱신하고, 그다음 설정 파일을 맞춘다.
 - 실제 값은 `.env`에 두고, 개인별 오버라이드가 필요하면 `.env.local`을 쓰되 추적하지 않는다.
@@ -131,16 +131,20 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://example.invalid/au
 
 - 목적: 운영 Postgres + JWT 검증
 - 인증: 활성
-- DB: Postgres
+- DB: Supabase Postgres
 
 ```bash
 SPRING_PROFILES_ACTIVE=prod \
-TODAY_US_DB_URL=jdbc:postgresql://... \
-TODAY_US_DB_USERNAME=... \
+TODAY_US_DB_URL='jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require' \
+TODAY_US_DB_USERNAME='postgres.<project-ref>' \
 TODAY_US_DB_PASSWORD=... \
+TODAY_US_DB_DRIVER=org.postgresql.Driver \
 SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>/auth/v1/.well-known/jwks.json \
+TODAY_US_SECURITY_ALLOWED_ORIGINS=https://today-us.earlydreamer.dev \
 ./gradlew bootRun
 ```
+
+운영에서는 `spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect`를 `prod` 프로필에 명시해 Supabase Postgres 기준 방언을 고정해 둔다.
 
 ---
 
@@ -154,6 +158,8 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>
 - `TODAY_US_DB_DRIVER`
 - `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI`
 - `TODAY_US_SUPABASE_PROJECT_URL`
+- `TODAY_US_SECURITY_ALLOWED_ORIGINS`
+- `TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS`
 
 ### Cloudflare R2
 
@@ -178,6 +184,8 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>
 - `local`은 H2 + auth 비활성으로 돌린다.
 - `default`는 secure-by-default라서 DB/JWT 값을 직접 넣어야 한다.
 - `prod`는 Postgres/JWT/R2/Sweetbook 값을 모두 환경 변수로 받는다.
+- 프론트 배포 도메인은 `TODAY_US_SECURITY_ALLOWED_ORIGINS`에 정확한 origin으로 넣는다.
+- Cloudflare Pages preview까지 열어야 하면 `TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS`에 `https://*.pages.dev` 같은 패턴을 추가한다.
 - `test`는 `src/test/resources/application-test.yml`의 고정값으로 돌아간다.
 
 ---
