@@ -1,0 +1,89 @@
+name: Deploy Today Us Backend
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy Config Files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml,nginx/nginx.conf"
+          target: ${{ secrets.SCP_TARGET_PATH }}
+          strip_components: 0
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p ${{ secrets.SSH_DEPLOY_PATH }}
+            cd ${{ secrets.SSH_DEPLOY_PATH }}
+            
+            # .env 파일 생성 (Secrets 기반)
+            cat <<EOF > .env
+            TODAY_US_DB_URL=${{ secrets.TODAY_US_DB_URL }}
+            TODAY_US_DB_USERNAME=${{ secrets.TODAY_US_DB_USERNAME }}
+            TODAY_US_DB_PASSWORD=${{ secrets.TODAY_US_DB_PASSWORD }}
+            TODAY_US_SUPABASE_PROJECT_URL=${{ secrets.TODAY_US_SUPABASE_PROJECT_URL }}
+            TODAY_US_R2_ACCESS_KEY_ID=${{ secrets.TODAY_US_R2_ACCESS_KEY_ID }}
+            TODAY_US_R2_SECRET_ACCESS_KEY=${{ secrets.TODAY_US_R2_SECRET_ACCESS_KEY }}
+            TODAY_US_SWEETBOOK_API_KEY=${{ secrets.TODAY_US_SWEETBOOK_API_KEY }}
+            EOF
+
+            # GHCR 로그인
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 최신 이미지 풀링 및 재시작
+            docker-compose pull
+            docker-compose up -d --remove-orphans
+            
+            # 안 쓰는 이미지는 청소
+            docker image prune -f
