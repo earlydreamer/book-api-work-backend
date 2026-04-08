@@ -5,9 +5,16 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -26,6 +33,30 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew bootJar
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=main
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
       - name: Install cloudflared
         run: |
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
@@ -37,7 +68,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           
-          # 1. SSH Private Key 설정 (환경변수 사용하여 인덴트 오염 방지)
+          # 1. SSH Private Key 설정
           echo "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           
@@ -53,11 +84,6 @@ jobs:
           EOF
           chmod 600 ~/.ssh/config
 
-      - name: Test tunnel connection
-        run: |
-          echo "Connecting to: ${{ secrets.SSH_HOST }} ..."
-          ssh -v -F ~/.ssh/config synology-nas "echo SSH OK"
-
       - name: Create deploy directory
         run: |
           ssh -F ~/.ssh/config synology-nas "mkdir -p ${{ secrets.SSH_DEPLOY_PATH }}"
@@ -70,7 +96,6 @@ jobs:
 
       - name: Copy config files via native SCP
         run: |
-          # .env 파일을 포함하여 전송
           scp -F ~/.ssh/config docker-compose.yml .env nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
 
       - name: Deploy to Server via native SSH
@@ -81,10 +106,11 @@ jobs:
             # 환경 설정
             DEPLOY_DIR="${{ secrets.SSH_DEPLOY_PATH }}"
             REGISTRY="ghcr.io"
-            IMAGE="${{ secrets.GHCR_IMAGE_PATH }}" # ghcr.io/owner/repo:tag
+            # 이미지 주소를 리포지토리 경로와 브랜치명으로 자동 구성
+            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
             SERVICE_NAME="today-us-backend"
             
-            # docker-compose 버전 탐지 로직 (유저 제공 스크립트 이식)
+            # docker-compose 버전 탐지 로직
             COMPOSE_IS_V2=0
             if command -v docker-compose >/dev/null 2>&1; then
               COMPOSE_V1="$(command -v docker-compose)"
@@ -103,7 +129,6 @@ jobs:
             fi
             compose() { if [ "$COMPOSE_IS_V2" -eq 1 ]; then docker compose "$@"; else "$COMPOSE_V1" "$@"; fi; }
             
-            echo "✅ 배포 경로 이동: $DEPLOY_DIR"
             cd "$DEPLOY_DIR"
             
             echo "🚀 최신 이미지 풀링: $IMAGE"
