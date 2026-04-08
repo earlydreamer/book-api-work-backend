@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 	"spring.config.import=optional:file:.env[.properties]",
 	"today-us.security.allowed-origins=https://today-us.earlydreamer.dev,http://localhost:3000",
 	"today-us.security.allowed-origin-patterns=https://*.pages.dev",
+	"today-us.supabase.project-url=https://project.supabase.co/",
 	"today-us.r2.account-id=test-r2-account",
 	"today-us.r2.access-key-id=test-r2-access-key",
 	"today-us.r2.secret-access-key=test-r2-secret",
@@ -38,6 +39,9 @@ class ExternalPropertiesBindingTest {
 	private SweetbookProperties sweetbookProperties;
 
 	@Autowired
+	private SupabaseProperties supabaseProperties;
+
+	@Autowired
 	private WebClient sweetbookWebClient;
 
 	@Test
@@ -46,6 +50,8 @@ class ExternalPropertiesBindingTest {
 			.containsExactly("https://today-us.earlydreamer.dev", "http://localhost:3000");
 		assertThat(securityProperties.allowedOriginPatterns())
 			.containsExactly("https://*.pages.dev");
+		assertThat(supabaseProperties.resolveJwkSetUri())
+			.isEqualTo("https://project.supabase.co/auth/v1/.well-known/jwks.json");
 
 		assertThat(r2Properties.accountId()).isEqualTo("test-r2-account");
 		assertThat(r2Properties.accessKeyId()).isEqualTo("test-r2-access-key");
