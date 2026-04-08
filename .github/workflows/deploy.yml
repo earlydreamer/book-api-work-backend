@@ -126,7 +126,7 @@ jobs:
             DEPLOY_DIR="${{ secrets.SSH_DEPLOY_PATH }}"
             REGISTRY="ghcr.io"
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
-            SERVICE_NAME="today-us-backend"
+            SERVICE_NAME="backend"
             
             # docker-compose 버전 탐지 로직
             COMPOSE_IS_V2=0
