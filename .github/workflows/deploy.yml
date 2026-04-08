@@ -32,16 +32,16 @@ jobs:
           sudo dpkg -i cloudflared.deb
 
       - name: Configure SSH for Cloudflare Tunnel
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
           
-          # 1. SSH Private Key 설정
-          cat << 'EOF' > ~/.ssh/id_rsa
-          ${{ secrets.SSH_PRIVATE_KEY }}
-          EOF
+          # 1. SSH Private Key 설정 (환경변수 사용하여 인덴트 오염 방지)
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-          # 2. SSH Config 설정 (ProxyCommand + Service Tokens)
+          # 2. SSH Config 설정
           cat <<EOF > ~/.ssh/config
           Host synology-nas
             HostName ${{ secrets.SSH_HOST }}
@@ -101,8 +101,6 @@ jobs:
             cd "$DEPLOY_DIR"
             
             echo "🚀 최신 이미지 풀링: $IMAGE"
-            # GHCR 로그인이 필요할 수 있으나 이미 러너에서 빌드/푸시했다면 서버에서도 풀링 가능해야 함
-            # (만약 여기서 에러나면 서버에서도 docker login 필요)
             docker pull "$IMAGE" || true
             
             echo "🛑 기존 컨테이너 중지 및 제거"
