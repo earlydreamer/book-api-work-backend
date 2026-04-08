@@ -21,6 +21,7 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 ### 🛰️ 서버 접속 정보 (SSH)
 
 - `SSH_HOST`: 배포할 서버의 IP 주소 또는 도메인
+- `SSH_PORT`: SSH 접속 포트 (기본값 22, 변경된 경우 해당 포트)
 - `SSH_USERNAME`: 서버 접속 계정 (예: `ubuntu`)
 - `SSH_DEPLOY_PATH`: **서버 내부의 실제 전체 경로** (SSH 커맨드 실행용)
   - 예: `/volume1/docker/today-us/today-us-backend` (시놀로지 NAS 등)
