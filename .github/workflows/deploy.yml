@@ -104,6 +104,8 @@ jobs:
           echo "TODAY_US_R2_SECRET_ACCESS_KEY=${{ secrets.TODAY_US_R2_SECRET_ACCESS_KEY }}" >> .env
           echo "TODAY_US_R2_BUCKET=${{ secrets.TODAY_US_R2_BUCKET }}" >> .env
           echo "TODAY_US_R2_PUBLIC_BASE_URL=${{ secrets.TODAY_US_R2_PUBLIC_BASE_URL }}" >> .env
+          echo "TODAY_US_R2_UPLOAD_PREFIX=${{ secrets.TODAY_US_R2_UPLOAD_PREFIX }}" >> .env
+          echo "TODAY_US_R2_PRESIGN_TTL_SECONDS=${{ secrets.TODAY_US_R2_PRESIGN_TTL_SECONDS }}" >> .env
           
           # 4. 스윗북 API 설정
           echo "TODAY_US_SWEETBOOK_BASE_URL=${{ secrets.TODAY_US_SWEETBOOK_BASE_URL }}" >> .env
