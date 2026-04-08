@@ -18,17 +18,21 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 - `TODAY_US_R2_SECRET_ACCESS_KEY`: R2 Secret Key (외 기타 R2 설정들...)
 - `TODAY_US_SWEETBOOK_API_KEY`: 스윗북 API 키
 
-### 🛰️ 서버 접속 정보 (SSH)
+### 🛰️ 서버 접속 정보 (SSH / Cloudflare Tunnel)
 
-- `SSH_HOST`: 배포할 서버의 IP 주소 또는 도메인
-- `SSH_PORT`: SSH 접속 포트 (기본값 22, 변경된 경우 해당 포트)
-- `SSH_USERNAME`: 서버 접속 계정 (예: `ubuntu`)
-- `SSH_DEPLOY_PATH`: **서버 내부의 실제 전체 경로** (SSH 커맨드 실행용)
-  - 예: `/volume1/docker/today-us/today-us-backend` (시놀로지 NAS 등)
-- `SCP_TARGET_PATH`: **SCP/SFTP가 바라보는 가상 루트 경로** (파일 전송용)
-  - 예: `/docker/today-us/today-us-backend`
+- `SSH_HOST`: Cloudflare Tunnel에 등록된 도메인 (예: `ssh.today-us.com`)
+- `SSH_PORT`: SSH 접속 포트 (보통 22, 시놀로지 변경 포트 등)
+- `SSH_USERNAME`: 서버 접속 계정
+- `SSH_PRIVATE_KEY`: 서버 접속용 개인키 (`id_rsa` 내용 전체)
+- `CF_CLIENT_ID`: Cloudflare Zero Trust 서비스 토큰 ID
+- `CF_CLIENT_SECRET`: Cloudflare Zero Trust 서비스 토큰 Secret
+- `GHCR_IMAGE_PATH`: 배포할 이미지 경로 (예: `ghcr.io/earlydreamer/book-api-work-backend:main`)
+
+### 📂 경로 설정 (시놀로지 NAS 전용)
+
+- `SSH_DEPLOY_PATH`: **SSH 셸 기준** 실제 경로 (예: `/volume1/docker/today-us/today-us-backend`)
+- `SCP_TARGET_PATH`: **SCP/SFTP 기준** 전송 경로 (예: `/docker/today-us/today-us-backend`)
   - **참고**: 일반 Ubuntu 환경에서는 두 경로가 같을 수도 있지만, 가상 루트가 설정된 환경에서는 반드시 구분해야 합니다.
-- `SSH_PRIVATE_KEY`: 서버 접속용 **개인키(Private Key)** 내용 전체
   - **🚨 절대 주의**: 공개키(`.pub`)가 아닌 **개인키** 파일을 복사해야 합니다. ed25519 등 OpenSSH 최신 규격도 지원합니다.
   - **서버 설정**: 대상 서버의 `~/.ssh/authorized_keys`에는 해당 키의 **공개키(Public Key, .pub)**가 등록되어 있어야 합니다.
 

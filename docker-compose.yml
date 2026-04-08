@@ -1,6 +1,6 @@
 services:
   backend:
-    build: .
+    image: ghcr.io/earlydreamer/book-api-work-backend:main
     container_name: today-us-backend
     restart: always
     environment:
