@@ -133,7 +133,7 @@ jobs:
             DEPLOY_DIR="${{ secrets.SSH_DEPLOY_PATH }}"
             REGISTRY="ghcr.io"
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
-            SERVICE_NAME="backend"
+            SERVICES="backend nginx"
             
             # docker-compose 버전 탐지 로직
             COMPOSE_IS_V2=0
@@ -163,11 +163,27 @@ jobs:
             docker pull "$IMAGE" || true
             
             echo "🛑 기존 컨테이너 중지 및 제거"
-            compose stop "$SERVICE_NAME" || true
-            compose rm -f "$SERVICE_NAME" || true
+            compose stop $SERVICES || true
+            compose rm -f $SERVICES || true
             
             echo "✨ 신규 컨테이너 기동"
-            compose up -d --no-deps --force-recreate "$SERVICE_NAME"
+            compose up -d --force-recreate $SERVICES
+
+            echo "🩺 프록시 경유 헬스 체크"
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS http://localhost:18765/actuator/health >/dev/null; then
+                echo "✅ 헬스 체크 성공"
+                break
+              fi
+              if [ "$i" -eq 10 ]; then
+                echo "❌ 헬스 체크 실패"
+                compose ps || true
+                docker logs --tail=100 today-us-backend || true
+                docker logs --tail=100 today-us-nginx || true
+                exit 1
+              fi
+              sleep 3
+            done
             
             echo "🧹 오래된 이미지 정리"
             docker image prune -f || true
