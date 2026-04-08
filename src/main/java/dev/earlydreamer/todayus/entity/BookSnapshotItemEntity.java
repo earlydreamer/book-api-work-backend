@@ -11,10 +11,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "book_snapshot_items")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class BookSnapshotItemEntity {
 
 	@Id
@@ -39,6 +48,18 @@ public class BookSnapshotItemEntity {
 	@Column(name = "partner_entry_json", columnDefinition = "TEXT")
 	private String partnerEntryJson;
 
+	@Column(name = "me_memo", columnDefinition = "TEXT")
+	private String meMemo;
+
+	@Column(name = "partner_memo", columnDefinition = "TEXT")
+	private String partnerMemo;
+
+	@Column(name = "me_display_name", length = 100)
+	private String meDisplayName;
+
+	@Column(name = "partner_display_name", length = 100)
+	private String partnerDisplayName;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "photo_asset_id")
 	private UploadedAssetEntity photoAsset;
@@ -50,15 +71,16 @@ public class BookSnapshotItemEntity {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
-	protected BookSnapshotItemEntity() {
-	}
-
 	public BookSnapshotItemEntity(
 		BookSnapshotEntity snapshot,
 		DayCardEntity dayCard,
 		LocalDate localDate,
 		String myEntryJson,
 		String partnerEntryJson,
+		String meMemo,
+		String partnerMemo,
+		String meDisplayName,
+		String partnerDisplayName,
 		UploadedAssetEntity photoAsset,
 		int pageOrder
 	) {
@@ -67,15 +89,11 @@ public class BookSnapshotItemEntity {
 		this.localDate = localDate;
 		this.myEntryJson = myEntryJson;
 		this.partnerEntryJson = partnerEntryJson;
+		this.meMemo = meMemo;
+		this.partnerMemo = partnerMemo;
+		this.meDisplayName = meDisplayName;
+		this.partnerDisplayName = partnerDisplayName;
 		this.photoAsset = photoAsset;
 		this.pageOrder = pageOrder;
-	}
-
-	public LocalDate getLocalDate() {
-		return localDate;
-	}
-
-	public UploadedAssetEntity getPhotoAsset() {
-		return photoAsset;
 	}
 }

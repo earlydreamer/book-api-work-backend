@@ -93,6 +93,10 @@ public class BookSnapshotService {
 				dayCard.getLocalDate(),
 				writeEntryJson(myEntry),
 				writeEntryJson(partnerEntry),
+				myEntry != null ? myEntry.getMemo() : null,
+				partnerEntry != null ? partnerEntry.getMemo() : null,
+				currentUser.getDisplayName(),
+				counterpart != null ? counterpart.getDisplayName() : null,
 				firstPhotoAsset(myEntry, partnerEntry),
 				index + 1
 			));

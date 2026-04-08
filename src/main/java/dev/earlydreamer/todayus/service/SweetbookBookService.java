@@ -11,6 +11,7 @@ import dev.earlydreamer.todayus.entity.SweetbookUploadedAssetStatus;
 import dev.earlydreamer.todayus.integration.storage.FetchedUploadedAsset;
 import dev.earlydreamer.todayus.integration.storage.UploadedAssetBinaryFetcher;
 import dev.earlydreamer.todayus.integration.sweetbook.SweetbookClient;
+import dev.earlydreamer.todayus.integration.sweetbook.SweetbookProperties;
 import dev.earlydreamer.todayus.integration.sweetbook.dto.CreateBookCommand;
 import dev.earlydreamer.todayus.integration.sweetbook.dto.CreateBookResult;
 import dev.earlydreamer.todayus.integration.sweetbook.dto.FinalizeBookResult;
