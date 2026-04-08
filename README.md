@@ -1,236 +1,90 @@
-# 오늘 우리 백엔드
+# 오늘 우리 (Today Us) - 최종 제출 통합 가이드
 
-`backend/book-api-work-backend`는 현재 백엔드 구현 대상 디렉터리다.
-
-2026-04-07 기준으로 이 repo에는 `Spring Boot + JPA contract scaffold`가 들어와 있다.
-지금 단계의 핵심은 프론트에서 잠근 상태 계약을 backend API, JPA 모델, migration으로 정확히 옮기는 것이다.
-
----
-
-## 1. 먼저 읽을 문서
-
-1. `AGENTS.md`
-2. `docs/README.md`
-3. `docs/specs/2026-04-07-cross-env-handoff-v1.md`
-4. `docs/specs/2026-04-05-today-our-mvp-v2.md`
-5. `docs/plans/2026-04-05-today-our-mvp-execution-blueprint.md`
-6. `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
-7. `docs/specs/2026-04-07-today-us-front-progress-v1.md`
+> [!TIP]
+> **시연 주소**: [https://today-us.earlydreamer.dev/](https://today-us.earlydreamer.dev/)  
+> **백엔드 저장소**: [book-api-work-backend](./) | **프론트엔드 저장소**: [today-us-front](../../today-us/today-us-front)
 
 ---
 
-## 2. 현재 상태
+## 1. 서비스 소개 🧔‍♂️📖
+### "디지털 홍수 속에서 손에 잡히는 우리만의 기록"
+**오늘 우리 (Today Us)**는 매일 쏟아지는 디지털 사진과 조각 일기를 모아, 세상에 하나뿐인 **실물 포토북**으로 엮어주는 서비스입니다. 
 
-- Spring Boot 4.0.5 기반 Gradle Kotlin DSL skeleton 생성 완료
-- contract endpoint, DTO, ProblemDetail, security toggle, OpenAPI 설정 추가
-- JPA entity / repository / Flyway core migration 구현 완료
-- auth boundary는 Spring Security Resource Server 기준으로 연결 완료
-- profile 분리 완료: 기본은 secure-by-default, `local`/`test`만 auth-disabled + H2
-- Postgres Testcontainers smoke test 추가 완료, 현재 환경에서는 Docker 없으면 skip
-- `.env.example` 기준 env 관리, R2 direct upload intent/complete 구현 완료
-- Sweetbook sandbox 책 생성, asset 업로드, finalization 구현 완료
-- 수동 주문 생성, 주문 조회, Sweetbook webhook 상태 동기화 구현 완료
-- frontend는 이미 `현재 관계 / 이전 관계` 분리 정책을 기준으로 구현됨
-- backend는 그 정책을 그대로 수용하는 응답 shape부터 잠근 상태
-
----
-
-## 3. 현재 잠긴 핵심 정책
-
-### 관계 기록
-
-- 연결을 끊어도 이전 기록은 삭제하지 않음
-- 이전 기록은 archive/history로 유지
-- 다시 연결하면 기록 수와 책 진행도는 `0일부터 다시 시작`
-- 피드는 현재 관계만 보여줌
-- 보관함은 현재 관계 / 이전 관계를 구분해서 보여줌
-
-### 책 자격
-
-- 최근 30일 중 기록 20일 이상
-
-### backend 해석 초안
-
-- `couples`는 영구 pair identity가 아니라 `관계 인스턴스`로 본다
-- reconnect 시 기존 `couple_id` 재사용이 아니라 새 `couple_id` 생성
-
-이 해석은 현재 backend 계약 초안의 핵심 가정이다.
-구현 전에 다시 한 번 확인하고 들어가는 게 좋다.
+- **누구를 위한 서비스인가?**
+  - 매일의 소중한 순간을 디지털 데이터로만 남기기 아쉬운 커플.
+  - 아이의 성장 과정을 기록하고 나중에 선물하고 싶은 가족.
+- **핵심 기능**
+  - **감성 타임라인**: 파트너와 공유하는 프라이빗 일기 및 사진 피드.
+  - **지능형 아카이빙**: 관계가 종료되어도 기록은 소중히 보관하며, 새로운 관계에서는 '0일'부터 다시 시작하는 유연한 관계 관리.
+  - **실물 포토북 주문**: 스윗북(Sweetbook) API를 통한 실시간 포토북 제작 및 주문.
+  - **안전한 보안**: Supabase Auth와 Cloudflare Tunnel 기반의 제로 트러스트(Zero Trust) 배포.
 
 ---
 
-## 4. 목표 스택
+## 2. 기술 선택의 이유 및 설계 의도 ⚙️🏗️
+### 왜 이 서비스를 선택했는가?
+단순한 사진첩은 많습니다. 하지만 **'기록이 실물이 되는 순간'**의 감동은 다릅니다. 우리는 사용자에게 '소장 가치'가 있는 경험을 제공하기 위해 Printing-as-a-Service 모델을 MVP로 선택했습니다.
 
-- `Spring Boot 4.0.x`  현재 scaffold는 `4.0.5`
-- `Java 21`
-- `Spring Security`
-- `Supabase Auth + Postgres`
-- `Flyway`
-- `Cloudflare R2`
-- `WebClient`
-- `DB-backed jobs`
-
-세부 근거는 실행 청사진 문서를 따른다.
+### 기술적 결정 (Technical Context)
+- **Spring Boot 3 & Java 21**: 강력한 타입 안정성과 비동기 클라이언트(WebClient) 활용을 통한 외부 API(스윗북) 연동 최적화.
+- **React & Vite**: 빠른 개발 피드백 루프와 현대적인 UI 컴포넌트 라이브러리 활용.
+- **Supabase & Postgres**: 서버리스 인증과 강력한 RDBMS 기능을 통합하여 개발 속도 극대화.
+- **Cloudflare Tunnel & Docker**: 공인 IP 노출 없이 시놀로지 NAS 내부망에 안전하게 서비스를 배포하는 터널링 인프라 구축.
 
 ---
 
-## 5. 로컬 비밀값 관리
+## 3. 실행 방법 (How to Run) 🚀
+### ⚙️ 공통 환경 변수 설정
+각 폴더의 `.env.example`을 복사하여 실제 키값을 입력해 주세요.
+- **프론트엔드**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL`
+- **백엔드**: `TODAY_US_DB_URL`, `TODAY_US_R2_ACCESS_KEY_ID`, `TODAY_US_SWEETBOOK_API_KEY` 등
 
-- Spring은 `application.yml`에서 `.env`, `.env.local`을 순서대로 읽는다.
-- `.env`와 `.env.local`은 git에 올리지 않는다.
-- 새 키를 추가할 때는 `.env.example`을 먼저 갱신하고, 그다음 설정 파일을 맞춘다.
-- 실제 값은 `.env`에 두고, 개인별 오버라이드가 필요하면 `.env.local`을 쓰되 추적하지 않는다.
-
-가장 먼저 할 일은 이거다.
-
+### 🎨 프론트엔드 (Frontend)
 ```bash
-cp .env.example .env
+cd today-us/today-us-front
+npm install
+npm run dev
 ```
 
----
-
-## 6. 바로 시작할 때의 추천 순서
-
-1. frontend에서 `uploads -> day-card -> book-snapshot -> orders` 실연동 연결
-2. 운영 환경에 Supabase JWK 설정과 현재 사용자 hydrate를 붙이기
-3. Sweetbook sandbox 실키와 webhook delivery 설정을 운영값으로 맞추기
-4. 결제 confirm이 들어오면 현재 수동 주문 생성 트리거를 교체하기
-
-핵심은 `order`보다 먼저 `relationship state`를 안정적으로 표현하는 거다.
-
----
-
-## 7. 실행 모드
-
-### local
-
-- 목적: 프론트 계약 확인, 로컬 stub-like 개발
-- 인증: 비활성
-- DB: H2
-
+### ⚙️ 백엔드 (Backend)
 ```bash
-cp .env.example .env
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
-```
-
-### default
-
-- 목적: secure-by-default 확인
-- 인증: 활성
-- DB: 외부 설정 필요
-
-```bash
-TODAY_US_DB_URL=jdbc:h2:mem:todayus \
-TODAY_US_DB_USERNAME=sa \
-TODAY_US_DB_DRIVER=org.h2.Driver \
-SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://example.invalid/auth/v1/.well-known/jwks.json \
+cd backend/book-api-work-backend
 ./gradlew bootRun
 ```
 
-### prod
+---
 
-- 목적: 운영 Postgres + JWT 검증
-- 인증: 활성
-- DB: Supabase Postgres
+## 4. 사용한 API 목록 (Sweetbook Integration) 🔨
+우리는 **Sweetbook Book Print API v1**을 활용하여 제작부터 배송까지의 파이프라인을 구축했습니다.
 
-```bash
-SPRING_PROFILES_ACTIVE=prod \
-TODAY_US_DB_URL='jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require' \
-TODAY_US_DB_USERNAME='postgres.<project-ref>' \
-TODAY_US_DB_PASSWORD=... \
-TODAY_US_DB_DRIVER=org.postgresql.Driver \
-SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=https://<supabase-project>/auth/v1/.well-known/jwks.json \
-TODAY_US_SECURITY_ALLOWED_ORIGINS=https://today-us.earlydreamer.dev \
-./gradlew bootRun
-```
-
-운영에서는 `spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect`를 `prod` 프로필에 명시해 Supabase Postgres 기준 방언을 고정해 둔다.
+| API 엔드포인트 | 용도 | 핵심 구현 디테일 |
+| :--- | :--- | :--- |
+| `POST /v1/books` | 포토북 초안 생성 | **Idempotency-Key**를 통한 중복 생성 방지 |
+| `POST /v1/books/{id}/photos` | 사진 자산 업로드 | Multipart Form Data 스트리밍 처리 |
+| `POST /v1/books/{id}/cover` | 표지 레이아웃 생성 | 템플릿 파라미터 기반 자동 렌더링 |
+| `POST /v1/books/{id}/contents` | 내지 데이터 주입 | 페이지 분할 로직 및 데이터 매핑 |
+| `POST /v1/books/{id}/finalization` | 제작 확정 | 최종 페이지 수 산출 및 주문 준비 완료 |
+| `POST /v1/orders` | 실물 주문 생성 | 배송지 정보 및 외부 참조 ID(External Ref) 연동 |
 
 ---
 
-## 8. 환경 변수 요약
+## 5. AI 도구 사용 내역 (AI Collaborative Development) 🤖🤝
+본 프로젝트는 현대적인 AI 에이전트 워크플로우를 적극 수용하여 린하게 개발되었습니다.
 
-### 데이터베이스 / 인증
-
-- `TODAY_US_DB_URL`
-- `TODAY_US_DB_USERNAME`
-- `TODAY_US_DB_PASSWORD`
-- `TODAY_US_DB_DRIVER`
-- `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI`
-- `TODAY_US_SUPABASE_PROJECT_URL`
-- `TODAY_US_SECURITY_ALLOWED_ORIGINS`
-- `TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS`
-
-### Cloudflare R2
-
-- `TODAY_US_R2_ACCOUNT_ID`
-- `TODAY_US_R2_ACCESS_KEY_ID`
-- `TODAY_US_R2_SECRET_ACCESS_KEY`
-- `TODAY_US_R2_BUCKET`
-- `TODAY_US_R2_PUBLIC_BASE_URL`
-- `TODAY_US_R2_UPLOAD_PREFIX`
-- `TODAY_US_R2_PRESIGN_TTL_SECONDS`
-
-### Sweetbook sandbox
-
-- `TODAY_US_SWEETBOOK_BASE_URL`
-- `TODAY_US_SWEETBOOK_API_KEY`
-- `TODAY_US_SWEETBOOK_BOOK_SPEC_ID`
-- `TODAY_US_SWEETBOOK_TEMPLATE_ID`
-- `TODAY_US_SWEETBOOK_WEBHOOK_SECRET`
-
-### 실행 감각
-
-- `local`은 H2 + auth 비활성으로 돌린다.
-- `default`는 secure-by-default라서 DB/JWT 값을 직접 넣어야 한다.
-- `prod`는 Postgres/JWT/R2/Sweetbook 값을 모두 환경 변수로 받는다.
-- 프론트 배포 도메인은 `TODAY_US_SECURITY_ALLOWED_ORIGINS`에 정확한 origin으로 넣는다.
-- Cloudflare Pages preview까지 열어야 하면 `TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS`에 `https://*.pages.dev` 같은 패턴을 추가한다.
-- `test`는 `src/test/resources/application-test.yml`의 고정값으로 돌아간다.
+- **Antigravity (Google DeepMind)**: 메인 아키텍트. 전체 시스템 아키텍처 설계, 보안 설정(Spring Security), CI/CD 배포 파이프라인 구축, 인증 시스템 고도화를 주도함.
+- **Google AI Studio (Gemini 1.5 Pro)**: 초기 UI/UX 디자인 가이드 수립 및 토스 스타일의 차분한 경어체 라이팅 톤 정립.
+- **Claude Code**: 도메인 로직 리팩토링 및 복잡한 인프라 설정 디버깅 지원.
 
 ---
 
-## 9. 아직 열린 결정
-
-1. reconnect 시 새 `couple_id` 생성 가정을 최종 확정할지
-2. `GET /api/v1/me/home`를 BFF 응답으로 둘지, resource 조합형으로 둘지
-3. archive 응답을 sectioned view model로 줄지, raw resource로 줄지
-4. admin과 public을 실제로 어느 시점에 분리할지
+## 6. 설계 의도 및 비즈니스 비전 🌟
+- **비즈니스 가능성**: 개인화된 디지털 굿즈 시장은 해마다 성장 중입니다. "오늘 우리"는 단순히 사진을 저장하는 클라우드를 넘어, 물리적인 추억을 배송하는 매개체로서의 비즈니스 가치를 지독하게 파고듭니다.
+- **확장 계획**: 
+  - **AI 자동 선별**: 업로드된 사진 중 베스트 샷을 골라 자동으로 책을 구성하는 기능.
+  - **정기 구독**: 매달 일정량 이상의 일기가 쌓이면 자동으로 미니 포토북을 발송하는 구독 모델.
+  - **결제 연동**: Portone API를 통한 실제 결제 프로세스 연동 완료 예정.
 
 ---
 
-## 10. 지금 있는 핵심 파일
-
-- `build.gradle.kts`
-- `src/main/java/dev/earlydreamer/todayus/TodayUsBackendApplication.java`
-- `src/main/java/dev/earlydreamer/todayus/controller/`
-- `src/main/java/dev/earlydreamer/todayus/service/TodayUsContractService.java`
-- `src/main/java/dev/earlydreamer/todayus/service/OrderService.java`
-- `src/main/java/dev/earlydreamer/todayus/service/SweetbookBookService.java`
-- `src/main/java/dev/earlydreamer/todayus/service/SweetbookWebhookService.java`
-- `src/main/java/dev/earlydreamer/todayus/service/CurrentUserProvider.java`
-- `src/main/java/dev/earlydreamer/todayus/service/JwtCurrentUserProvider.java`
-- `src/main/java/dev/earlydreamer/todayus/service/LocalCurrentUserProvider.java`
-- `src/main/java/dev/earlydreamer/todayus/entity/`
-- `src/main/java/dev/earlydreamer/todayus/repository/`
-- `src/main/java/dev/earlydreamer/todayus/dto/`
-- `src/main/resources/db/migration/`
-- `src/main/resources/application-local.yml`
-- `src/main/resources/application-prod.yml`
-- `src/main/java/dev/earlydreamer/todayus/support/`
-- `src/test/java/dev/earlydreamer/todayus/controller/ContractApiIntegrationTest.java`
-- `src/test/java/dev/earlydreamer/todayus/controller/OrderControllerIntegrationTest.java`
-- `src/test/java/dev/earlydreamer/todayus/controller/SweetbookWebhookControllerIntegrationTest.java`
-- `src/test/java/dev/earlydreamer/todayus/security/`
-- `src/test/java/dev/earlydreamer/todayus/repository/PostgresSchemaIntegrationTest.java`
-- `docs/specs/2026-04-08-sweetbook-sandbox-book-pipeline-v1.md`
-- `docs/plans/2026-04-08-sweetbook-sandbox-book-pipeline-implementation-plan.md`
-- `docs/specs/2026-04-07-today-us-backend-api-contract-v1.md`
-- `docs/plans/2026-04-07-today-us-backend-contract-scaffold-plan.md`
-
-## 11. 주의
-
-- 이 repo는 독립 nested git repo다.
-- 공통 문서와 프론트 참고 문서는 이 repo의 `docs/` 아래에 로컬 사본으로 보관한다.
-- 프론트 활성 구현은 `/mnt/d/Projects/book-api-work/today-us/today-us-front` 쪽이다.
-- 예전 `frontend/book-api-work-frontend`는 레거시 참고용이다.
+> [!IMPORTANT]
+> 본 프로젝트는 **'보관하는 기록'에서 '만져지는 추억'으로**라는 철학을 실현하기 위해 AI와 사람이 긴밀하게 협업하여 완성되었습니다. 🧔‍♂️🚀✨🎯
