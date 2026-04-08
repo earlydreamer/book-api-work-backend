@@ -62,10 +62,16 @@ jobs:
         run: |
           ssh -F ~/.ssh/config synology-nas "mkdir -p ${{ secrets.SSH_DEPLOY_PATH }}"
 
+      - name: Create .env file for production
+        env:
+          ENV_PROD: ${{ secrets.ENV_PROD }}
+        run: |
+          echo "$ENV_PROD" > .env
+
       - name: Copy config files via native SCP
         run: |
-          # SCP는 SFTP 경로를 따르므로 SCP_TARGET_PATH 사용
-          scp -F ~/.ssh/config docker-compose.yml nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
+          # .env 파일을 포함하여 전송
+          scp -F ~/.ssh/config docker-compose.yml .env nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
 
       - name: Deploy to Server via native SSH
         run: |

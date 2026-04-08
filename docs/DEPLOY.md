@@ -27,6 +27,7 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 - `CF_CLIENT_ID`: Cloudflare Zero Trust 서비스 토큰 ID
 - `CF_CLIENT_SECRET`: Cloudflare Zero Trust 서비스 토큰 Secret
 - `GHCR_IMAGE_PATH`: 배포할 이미지 경로 (예: `ghcr.io/earlydreamer/book-api-work-backend:main`)
+- `ENV_PROD`: **서버용 .env 내용 전문** (DB 접속 정보, API 키 등 포함)
 
 ### 📂 경로 설정 (시놀로지 NAS 전용)
 
