@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
 	"spring.config.import=optional:file:.env[.properties]",
+	"today-us.security.allowed-origins=https://today-us.earlydreamer.dev,http://localhost:3000",
+	"today-us.security.allowed-origin-patterns=https://*.pages.dev",
 	"today-us.r2.account-id=test-r2-account",
 	"today-us.r2.access-key-id=test-r2-access-key",
 	"today-us.r2.secret-access-key=test-r2-secret",
@@ -30,6 +32,9 @@ class ExternalPropertiesBindingTest {
 	private R2Properties r2Properties;
 
 	@Autowired
+	private SecurityProperties securityProperties;
+
+	@Autowired
 	private SweetbookProperties sweetbookProperties;
 
 	@Autowired
@@ -37,6 +42,11 @@ class ExternalPropertiesBindingTest {
 
 	@Test
 	void bindsR2AndSweetbookPropertiesFromExternalConfig() {
+		assertThat(securityProperties.allowedOrigins())
+			.containsExactly("https://today-us.earlydreamer.dev", "http://localhost:3000");
+		assertThat(securityProperties.allowedOriginPatterns())
+			.containsExactly("https://*.pages.dev");
+
 		assertThat(r2Properties.accountId()).isEqualTo("test-r2-account");
 		assertThat(r2Properties.accessKeyId()).isEqualTo("test-r2-access-key");
 		assertThat(r2Properties.secretAccessKey()).isEqualTo("test-r2-secret");

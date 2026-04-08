@@ -3,6 +3,7 @@ package dev.earlydreamer.todayus.config;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,8 +24,10 @@ public class SecurityConfig {
 	@ConditionalOnProperty(prefix = "today-us.security", name = "auth-enabled", havingValue = "true", matchIfMissing = true)
 	SecurityFilterChain authenticatedSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable);
+		http.cors(Customizer.withDefaults());
 		http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		http.authorizeHttpRequests((auth) -> auth
+			.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 			.requestMatchers(PUBLIC_MATCHERS).permitAll()
 			.anyRequest().authenticated());
 		http.oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
@@ -35,8 +38,11 @@ public class SecurityConfig {
 	@ConditionalOnProperty(prefix = "today-us.security", name = "auth-enabled", havingValue = "false")
 	SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable);
+		http.cors(Customizer.withDefaults());
 		http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-		http.authorizeHttpRequests((auth) -> auth.anyRequest().permitAll());
+		http.authorizeHttpRequests((auth) -> auth
+			.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+			.anyRequest().permitAll());
 		return http.build();
 	}
 }

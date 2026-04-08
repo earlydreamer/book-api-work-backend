@@ -2,7 +2,7 @@ spring:
   application:
     name: today-us-backend
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:.env[.properties],optional:file:.env.local[.properties]
   jpa:
     hibernate:
       ddl-auto: validate
@@ -20,6 +20,8 @@ management:
 today-us:
   security:
     auth-enabled: true
+    allowed-origins: ${TODAY_US_SECURITY_ALLOWED_ORIGINS:}
+    allowed-origin-patterns: ${TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS:}
   time:
     zone-id: Asia/Seoul
   r2:

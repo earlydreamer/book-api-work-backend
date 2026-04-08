@@ -3,9 +3,14 @@ spring:
     url: ${TODAY_US_DB_URL}
     username: ${TODAY_US_DB_USERNAME}
     password: ${TODAY_US_DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: ${TODAY_US_DB_DRIVER:org.postgresql.Driver}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 today-us:
+  security:
+    allowed-origins: ${TODAY_US_SECURITY_ALLOWED_ORIGINS}
+    allowed-origin-patterns: ${TODAY_US_SECURITY_ALLOWED_ORIGIN_PATTERNS:}
   r2:
     account-id: ${TODAY_US_R2_ACCOUNT_ID}
     access-key-id: ${TODAY_US_R2_ACCESS_KEY_ID}
