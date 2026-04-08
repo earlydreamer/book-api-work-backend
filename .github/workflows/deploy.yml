@@ -88,14 +88,33 @@ jobs:
         run: |
           ssh -F ~/.ssh/config synology-nas "mkdir -p ${{ secrets.SSH_DEPLOY_PATH }}"
 
-      - name: Create .env file for production
-        env:
-          ENV_PROD: ${{ secrets.ENV_PROD }}
+      - name: Create .env file for production from individual secrets
         run: |
-          echo "$ENV_PROD" > .env
+          # 1. DB 설정
+          echo "TODAY_US_DB_URL=${{ secrets.TODAY_US_DB_URL }}" >> .env
+          echo "TODAY_US_DB_USERNAME=${{ secrets.TODAY_US_DB_USERNAME }}" >> .env
+          echo "TODAY_US_DB_PASSWORD=${{ secrets.TODAY_US_DB_PASSWORD }}" >> .env
+          
+          # 2. 보안 및 공통 설정
+          echo "TODAY_US_SECURITY_ALLOWED_ORIGINS=${{ secrets.TODAY_US_SECURITY_ALLOWED_ORIGINS }}" >> .env
+          
+          # 3. R2 저장소 설정
+          echo "TODAY_US_R2_ACCOUNT_ID=${{ secrets.TODAY_US_R2_ACCOUNT_ID }}" >> .env
+          echo "TODAY_US_R2_ACCESS_KEY_ID=${{ secrets.TODAY_US_R2_ACCESS_KEY_ID }}" >> .env
+          echo "TODAY_US_R2_SECRET_ACCESS_KEY=${{ secrets.TODAY_US_R2_SECRET_ACCESS_KEY }}" >> .env
+          echo "TODAY_US_R2_BUCKET=${{ secrets.TODAY_US_R2_BUCKET }}" >> .env
+          echo "TODAY_US_R2_PUBLIC_BASE_URL=${{ secrets.TODAY_US_R2_PUBLIC_BASE_URL }}" >> .env
+          
+          # 4. 스윗북 API 설정
+          echo "TODAY_US_SWEETBOOK_BASE_URL=${{ secrets.TODAY_US_SWEETBOOK_BASE_URL }}" >> .env
+          echo "TODAY_US_SWEETBOOK_API_KEY=${{ secrets.TODAY_US_SWEETBOOK_API_KEY }}" >> .env
+          echo "TODAY_US_SWEETBOOK_BOOK_SPEC_ID=${{ secrets.TODAY_US_SWEETBOOK_BOOK_SPEC_ID }}" >> .env
+          echo "TODAY_US_SWEETBOOK_TEMPLATE_ID=${{ secrets.TODAY_US_SWEETBOOK_TEMPLATE_ID }}" >> .env
+          echo "TODAY_US_SWEETBOOK_WEBHOOK_SECRET=${{ secrets.TODAY_US_SWEETBOOK_WEBHOOK_SECRET }}" >> .env
 
       - name: Copy config files via native SCP
         run: |
+          # .env 파일을 포함하여 전송
           scp -F ~/.ssh/config docker-compose.yml .env nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
 
       - name: Deploy to Server via native SSH
@@ -106,7 +125,6 @@ jobs:
             # 환경 설정
             DEPLOY_DIR="${{ secrets.SSH_DEPLOY_PATH }}"
             REGISTRY="ghcr.io"
-            # 이미지 주소를 리포지토리 경로와 브랜치명으로 자동 구성
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
             SERVICE_NAME="today-us-backend"
             

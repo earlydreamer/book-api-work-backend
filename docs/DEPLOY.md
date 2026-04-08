@@ -26,8 +26,20 @@ GitHub 레포지토리의 `Settings > Secrets and variables > Actions`에 아래
 - `SSH_PRIVATE_KEY`: 서버 접속용 개인키 (`id_rsa` 내용 전체)
 - `CF_CLIENT_ID`: Cloudflare Zero Trust 서비스 토큰 ID
 - `CF_CLIENT_SECRET`: Cloudflare Zero Trust 서비스 토큰 Secret
-- `ENV_PROD`: **서버용 .env 내용 전문** (DB 접속 정보, API 키 등 포함)
-  - **참고**: 배포 시 자동으로 이미지가 빌드되어 `ghcr.io/<유저>/<리포지토리>:main` 경로로 업로드 및 배포됩니다.
+- `TODAY_US_DB_URL`: PostgreSQL 접속 URL
+- `TODAY_US_DB_USERNAME`: DB 사용자명
+- `TODAY_US_DB_PASSWORD`: DB 비밀번호
+- `TODAY_US_SECURITY_ALLOWED_ORIGINS`: CORS 허용 오리진
+- `TODAY_US_R2_ACCOUNT_ID`: Cloudflare R2 계정 ID
+- `TODAY_US_R2_ACCESS_KEY_ID`: R2 Access Key
+- `TODAY_US_R2_SECRET_ACCESS_KEY`: R2 Secret Key
+- `TODAY_US_R2_BUCKET`: R2 버킷명
+- `TODAY_US_R2_PUBLIC_BASE_URL`: R2 공개 URL (CDN)
+- `TODAY_US_SWEETBOOK_BASE_URL`: 스윗북 API 베이스 URL
+- `TODAY_US_SWEETBOOK_API_KEY`: 스윗북 API 키
+- `TODAY_US_SWEETBOOK_BOOK_SPEC_ID`: 스윗북 책 사양 ID
+- `TODAY_US_SWEETBOOK_TEMPLATE_ID`: 스윗북 템플릿 ID
+- `TODAY_US_SWEETBOOK_WEBHOOK_SECRET`: 스윗북 웹훅 비밀키
 
 ### 📂 경로 설정 (시놀로지 NAS 전용)
 
