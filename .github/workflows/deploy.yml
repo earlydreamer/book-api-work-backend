@@ -86,7 +86,7 @@ jobs:
 
       - name: Create deploy directory
         run: |
-          ssh -F ~/.ssh/config synology-nas "mkdir -p ${{ secrets.SSH_DEPLOY_PATH }}"
+          ssh -F ~/.ssh/config synology-nas "mkdir -p ${{ secrets.SSH_DEPLOY_PATH }} ${{ secrets.SSH_DEPLOY_PATH }}/nginx"
 
       - name: Create .env file for production from individual secrets
         run: |
@@ -120,8 +120,9 @@ jobs:
 
       - name: Copy config files via native SCP
         run: |
-          # .env 파일을 포함하여 전송
-          scp -F ~/.ssh/config docker-compose.yml .env nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
+          # compose 루트 파일과 nginx 설정 파일을 기대 경로에 맞춰 각각 전송
+          scp -F ~/.ssh/config docker-compose.yml .env "synology-nas:${{ secrets.SCP_TARGET_PATH }}/"
+          scp -F ~/.ssh/config nginx/nginx.conf "synology-nas:${{ secrets.SCP_TARGET_PATH }}/nginx/nginx.conf"
 
       - name: Deploy to Server via native SSH
         run: |
