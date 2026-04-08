@@ -4,6 +4,7 @@ WORKDIR /app
 
 # 캐시 활용을 위해 의존성 파일 먼저 복사
 COPY gradlew .
+RUN chmod +x gradlew
 COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
