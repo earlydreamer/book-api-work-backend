@@ -133,7 +133,8 @@ jobs:
             DEPLOY_DIR="${{ secrets.SSH_DEPLOY_PATH }}"
             REGISTRY="ghcr.io"
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
-            SERVICES="backend nginx"
+            BACKEND_SERVICE="backend"
+            NGINX_SERVICE="nginx"
             
             # docker-compose 버전 탐지 로직
             COMPOSE_IS_V2=0
@@ -162,28 +163,66 @@ jobs:
             echo "🚀 최신 이미지 풀링: $IMAGE"
             docker pull "$IMAGE" || true
             
-            echo "🛑 기존 컨테이너 중지 및 제거"
-            compose stop $SERVICES || true
-            compose rm -f $SERVICES || true
-            
-            echo "✨ 신규 컨테이너 기동"
-            compose up -d --force-recreate $SERVICES
+            echo "🛑 기존 백엔드 컨테이너 중지 및 제거"
+            compose stop "$BACKEND_SERVICE" || true
+            compose rm -f "$BACKEND_SERVICE" || true
 
-            echo "🔎 컨테이너 running 상태 확인"
+            echo "✨ 신규 백엔드 컨테이너 기동"
+            compose up -d --no-deps --force-recreate "$BACKEND_SERVICE"
+
+            echo "🔎 백엔드 컨테이너 running 상태 확인"
             for i in 1 2 3 4 5 6 7 8 9 10; do
               BACKEND_STATUS="$(docker inspect -f '{{.State.Status}}' today-us-backend 2>/dev/null || echo missing)"
-              NGINX_STATUS="$(docker inspect -f '{{.State.Status}}' today-us-nginx 2>/dev/null || echo missing)"
-              if [ "$BACKEND_STATUS" = "running" ] && [ "$NGINX_STATUS" = "running" ]; then
-                echo "✅ 컨테이너 running 확인"
+              if [ "$BACKEND_STATUS" = "running" ]; then
+                echo "✅ 백엔드 컨테이너 running 확인"
                 break
               fi
               if [ "$i" -eq 10 ]; then
-                echo "❌ 컨테이너가 running 상태가 아니에요"
-                echo "backend=$BACKEND_STATUS nginx=$NGINX_STATUS"
+                echo "❌ 백엔드 컨테이너가 running 상태가 아니에요"
+                echo "backend=$BACKEND_STATUS"
                 compose ps || true
                 docker inspect today-us-backend --format='status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' || true
-                docker inspect today-us-nginx --format='status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' || true
                 docker logs --tail=100 today-us-backend || true
+                exit 1
+              fi
+              sleep 3
+            done
+
+            BACKEND_IP="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' today-us-backend)"
+
+            echo "🩺 백엔드 준비 완료 대기"
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              if curl -fsS "http://${BACKEND_IP}:8080/actuator/health" >/dev/null; then
+                echo "✅ 백엔드 헬스 체크 성공"
+                break
+              fi
+              if [ "$i" -eq 15 ]; then
+                echo "❌ 백엔드 헬스 체크 실패"
+                docker logs --tail=150 today-us-backend || true
+                exit 1
+              fi
+              sleep 3
+            done
+
+            echo "🛑 기존 nginx 컨테이너 중지 및 제거"
+            compose stop "$NGINX_SERVICE" || true
+            compose rm -f "$NGINX_SERVICE" || true
+
+            echo "✨ 신규 nginx 컨테이너 기동"
+            compose up -d --no-deps --force-recreate "$NGINX_SERVICE"
+
+            echo "🔎 nginx 컨테이너 running 상태 확인"
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              NGINX_STATUS="$(docker inspect -f '{{.State.Status}}' today-us-nginx 2>/dev/null || echo missing)"
+              if [ "$NGINX_STATUS" = "running" ]; then
+                echo "✅ nginx 컨테이너 running 확인"
+                break
+              fi
+              if [ "$i" -eq 10 ]; then
+                echo "❌ nginx 컨테이너가 running 상태가 아니에요"
+                echo "nginx=$NGINX_STATUS"
+                compose ps || true
+                docker inspect today-us-nginx --format='status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' || true
                 docker logs --tail=100 today-us-nginx || true
                 exit 1
               fi
